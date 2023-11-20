@@ -13,9 +13,11 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^1.6.2",
+    "canvas": "^2.11.2",
     "discord.js": "^13.3.1",
     "dns": "^0.1.2",
     "dotenv": "^16.3.1",
+    "jimp": "^0.22.10",
     "mc-ping-updated": "^0.1.1",
     "winston": "^3.11.0"
   }

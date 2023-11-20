@@ -1,22 +1,20 @@
-const { Client, Intents } = require('discord.js');
+const { Client, Intents, MessageAttachment } = require('discord.js');
 const dotenv = require('dotenv');
 const dns = require('dns');
 const winston = require('winston');
 const axios = require('axios');
 const mcPing = require('mc-ping-updated');
+const { createCanvas, loadImage, registerFont } = require('canvas');
 
-// Load environment variables from .env file
 dotenv.config();
 
-// Create a new instance of the Discord.js client with intents
 const client = new Client({
   intents: [
-    Intents.FLAGS.GUILDS,         // Enable guild-related events
-    Intents.FLAGS.GUILD_MESSAGES, // Enable message-related events
+    Intents.FLAGS.GUILDS,
+    Intents.FLAGS.GUILD_MESSAGES,
   ],
 });
 
-// Configure Winston for logging
 const logger = winston.createLogger({
   level: 'error',
   format: winston.format.json(),
@@ -26,39 +24,33 @@ const logger = winston.createLogger({
   ],
 });
 
-// Webhook URLs for summaries, invalid input, and errors
 const webhookUrlSummary = process.env.WEBHOOK_URL_SUMMARY;
 const webhookUrlInvalidInput = process.env.WEBHOOK_URL_INVALID_INPUT;
 const webhookUrlError = process.env.WEBHOOK_URL_ERROR;
 
-// Event listener when the bot is ready
+// Load the Minecraft font
+registerFont('MinecraftBold-nMK1.otf', { family: 'Minecraft' });
+
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
-// Event listener for incoming messages
 client.on('messageCreate', async (message) => {
-  // Ignore messages from bots
   if (message.author.bot) return;
 
-  // Extract all domain and port pairs from the user's message
   const userDomainAndPorts = extractAllDomainsAndPorts(message.content);
 
   if (!userDomainAndPorts.length) {
-    // Invalid user input
     const errorMessage = `Invalid user input: ${message.content}`;
     logError(errorMessage);
     sendSummary(webhookUrlInvalidInput, errorMessage);
-    // Ask the user to provide a valid domain and port
     message.reply('Please provide a valid domain and port in the format: `domain:port`');
     return;
   }
 
-  // Process each domain:port pair in the message separately
   for (const userDomainAndPort of userDomainAndPorts) {
     const { domain, port } = userDomainAndPort;
 
-    // Check if domain or port is missing and ask for the missing information
     if (!domain) {
       const errorMessage = 'Invalid user input: Missing domain';
       logError(errorMessage);
@@ -76,83 +68,80 @@ client.on('messageCreate', async (message) => {
     }
 
     try {
-      // Record the start time
       const startTime = new Date();
-
-      // Resolve IP address for the user-provided domain
       const userDomainIP = await resolveIP(domain);
-
-      // Record the end time
       const endTime = new Date();
-
-      // Calculate the processing time
       const processingTime = endTime - startTime;
 
-      // Resolve IP addresses for pre-specified domains
       const preSpecifiedDomains = ['hel1.bbn.one', 'sgp1.bbn.one', 'mum1.bbn.one', 'fsn1.bbn.one'];
       const domainToIPMap = await resolveIPs(preSpecifiedDomains);
-
-      // Check if the user-provided IP matches any of the pre-specified domains
       const isValidIP = preSpecifiedDomains.some((domain) => domainToIPMap[domain] === userDomainIP);
 
-      console.log(`isValidIP: ${isValidIP}`);  // Add this line for debugging
+      console.log(`isValidIP: ${isValidIP}`);
 
-      // React to the message based on the result
       if (isValidIP) {
-        // Scenario A: User-provided IP matches a pre-specified domain
         message.react('👍');
 
-    // Before checking port for Minecraft server
-    console.log(`Port before parsing: ${port}`);
-    const parsedPort = parseInt(port);
-    console.log(`Parsed port: ${parsedPort}`);
-    if (!isNaN(parsedPort)) {
-      console.log(`Parsed port type: ${typeof parsedPort}`);
-      console.log(`Parsed port value: ${parsedPort}`);
-      console.log(`Condition: ${parsedPort === 25565}`);
-      // Updated condition to check if parsedPort is a valid integer
-      if (!isNaN(parsedPort)) {
-        console.log('Inside block for Minecraft server port');
-        try {
-          // Query Minecraft server details
-          const serverDetails = await queryMinecraftServer(domain, parsedPort);
-          console.log('After querying Minecraft server');
+        const parsedPort = parseInt(port);
 
-          // Extracting MOTD from server details
-          const motd = serverDetails.description.text;
-          console.log(`MOTD: ${motd}`);
+        console.log(`Parsed port: ${parsedPort}`);
+        console.log(`Parsed port type: ${typeof parsedPort}`);
+        console.log(`Parsed port value: ${parsedPort}`);
+        console.log(`Condition: ${parsedPort === 25565}`);
 
-          // Send MOTD to the channel
-          console.log('Before sending MOTD to the channel');
-          const motdMessage = `Minecraft Server MOTD:\n${motd}`;
-          message.channel.send(motdMessage);
-          console.log('After sending MOTD to the channel');
-        } catch (error) {
-          // Log any errors that occur during the Minecraft server query
-          console.log(`Error querying Minecraft server: ${error.message}`);
-          logError(`Error querying Minecraft server: ${error.message}`);
-          sendSummary(webhookUrlError, `Error querying Minecraft server: ${error.message}`);
-          message.react('❌');
-          return; // Added to prevent further execution in case of an error
+        if (!isNaN(parsedPort)) {
+          console.log('Inside block for Minecraft server port');
+          try {
+            const serverDetails = await queryMinecraftServer(domain, parsedPort);
+            console.log('After querying Minecraft server');
+
+            const motd = serverDetails.description.text;
+
+            console.log(`MOTD: ${motd}`);
+
+            // Load the background image
+            const backgroundImage = await loadImage('minecraft_background.png');
+
+            // Create a canvas and set its dimensions
+            const canvas = createCanvas(400, 100);
+            const context = canvas.getContext('2d');
+
+            // Draw the background image on the canvas
+            context.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+
+            // Set the font for MOTD
+            context.font = '20px Minecraft';
+
+            // Set the text color
+            context.fillStyle = '#ffffff'; // Set it to the color used in Minecraft MOTD
+
+            // Draw the MOTD text on the canvas
+            context.fillText(motd, 10, 30);
+
+            // Convert the canvas to a buffer
+            const buffer = canvas.toBuffer();
+
+            // Send the image as an attachment
+            const attachment = new MessageAttachment(buffer, 'motd.png');
+            message.channel.send({ files: [attachment] });
+
+          } catch (error) {
+            console.log(`Error querying Minecraft server: ${error.message}`);
+            logError(`Error querying Minecraft server: ${error.message}`);
+            sendSummary(webhookUrlError, `Error querying Minecraft server: ${error.message}`);
+            message.react('❌');
+            return;
+          }
+        } else {
+          console.log('Parsed port is not a valid integer. Skipping Minecraft server details.');
         }
       } else {
-        console.log('Parsed port is not a valid integer. Skipping Minecraft server details.');
-      }
-    } else {
-      console.log('Parsing failed. Not a valid integer.');
-    }
-
-        const summary = `Processed message successfully. User provided domain: ${domain}, Valid IP: ${userDomainIP}, Processing Time: ${processingTime}ms`;
-        sendSummary(webhookUrlSummary, summary);
-      } else {
-        // Scenario B: User-provided IP does not match any pre-specified domain
         message.react('❌');
         const errorMessage = `Processed message with invalid domain. User provided domain: ${domain}, Invalid IP: ${userDomainIP}, Processing Time: ${processingTime}ms`;
         logError(errorMessage);
         sendSummary(webhookUrlInvalidInput, errorMessage);
       }
     } catch (error) {
-      // Handle errors
       const errorMessage = `Error processing message: ${error.message}`;
       logError(errorMessage);
       sendSummary(webhookUrlInvalidInput, errorMessage);
@@ -161,29 +150,25 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-// Function to extract all domain and port pairs from the user's message
+
 function extractAllDomainsAndPorts(message) {
   const matches = message.match(/\b([^\s]+?):(\d+)\b/g);
   if (matches) {
     return matches.map(match => {
       const [_, domain, port] = match.match(/([^\s]+?):(\d+)/);
-      // Validate domain (you might want to use a more robust validation method)
       if (isValidDomain(domain)) {
         return { domain, port };
       }
       return null;
-    }).filter(Boolean); // Filter out null entries
+    }).filter(Boolean);
   }
   return [];
 }
 
-
-// Function to validate a domain (you can customize this validation)
 function isValidDomain(domain) {
   return domain.includes('.');
 }
 
-// Function to resolve IP addresses for an array of domains
 async function resolveIPs(domains) {
   const promises = domains.map((domain) => resolveIP(domain));
   const results = await Promise.all(promises);
@@ -193,7 +178,6 @@ async function resolveIPs(domains) {
   }, {});
 }
 
-// Function to resolve the IP address for a domain
 function resolveIP(domain) {
   return new Promise((resolve, reject) => {
     dns.resolve(domain, 'A', (error, addresses) => {
@@ -206,12 +190,10 @@ function resolveIP(domain) {
   });
 }
 
-// Function to query Minecraft server details
 async function queryMinecraftServer(domain, port) {
   return new Promise((resolve, reject) => {
     mcPing(domain, port, (err, res) => {
       if (err) {
-        // Log the error
         logError(`Error querying Minecraft server for ${domain}:${port}: ${err.message}`);
         reject(err);
       } else {
@@ -221,21 +203,16 @@ async function queryMinecraftServer(domain, port) {
   });
 }
 
-// Function to send a detailed summary to a webhook
 async function sendSummary(webhookUrl, summary) {
   try {
     await axios.post(webhookUrl, { content: summary });
   } catch (error) {
-    // Log the error if sending to webhook fails
     logger.error(`Failed to send summary to webhook (${webhookUrl}): ${error.message}`);
   }
 }
 
-
-// Function to log errors with details
 function logError(message) {
   logger.error(message);
 }
 
-// Login to Discord with the bot token
 client.login(process.env.BOT_TOKEN);

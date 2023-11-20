@@ -27,3 +27,15 @@ error: Error processing message: Cannot read properties of undefined (reading 's
 {"level":"error","message":"Error processing message: parsedPort is not defined"}
 {"level":"error","message":"Invalid user input: FUCK YEAH"}
 {"level":"error","message":"Invalid user input: WE DID IT BABYYYYY"}
+{"level":"error","message":"Error querying Minecraft server: ENOENT, No such file or directory 'path/to/dirt_texture.png'"}
+{"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
+{"level":"error","message":"Invalid user input: <@781708312466554940> can you work on improving this?"}
+{"level":"error","message":"Error querying Minecraft server: ENOENT: no such file or directory, open 'D:\\Minecraft Server Showcase\\minecraft_background.png'"}
+{"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
+{"level":"error","message":"Error querying Minecraft server: no named row at line 0"}
+{"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
+{"level":"error","message":"Error querying Minecraft server: no named row at line 0"}
+{"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
+{"level":"error","message":"Error querying Minecraft server: ENOENT, No such file or directory 'path/to/minecraft_background.png'"}
+{"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
+{"level":"error","message":"Invalid user input: gg"}
