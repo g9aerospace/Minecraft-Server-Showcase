@@ -23,3 +23,4 @@ error: Error processing message: Cannot read properties of undefined (reading 's
 {"level":"error","message":"Invalid user input: bricks-network.xyz"}
 {"level":"error","message":"Invalid user input: gg.bbn.one"}
 {"level":"error","message":"Processed message with invalid domain. User provided domain: gg.bbn.one, Invalid IP: 128.140.26.58, Processing Time: 781ms"}
+{"level":"error","message":"Invalid user input: hel1.bbn.one:45979ac"}
