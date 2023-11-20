@@ -7,3 +7,6 @@ error: Error processing message: Cannot read properties of undefined (reading 's
 {"level":"error","message":"Invalid user input: who the fuck"}
 {"level":"error","message":"Invalid user input: lol"}
 {"level":"error","message":"Invalid user input: 🤣"}
+{"level":"error","message":"Invalid user input: sgp1.bbn.one"}
+{"level":"error","message":"Invalid user input: hmm nice"}
+{"level":"error","message":"Error processing message: queryA ESERVFAIL hi hel1.bbn.one"}
