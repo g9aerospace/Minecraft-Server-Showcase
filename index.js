@@ -118,10 +118,10 @@ client.on('messageCreate', async (message) => {
 
 // Function to extract all domain and port pairs from the user's message
 function extractAllDomainsAndPorts(message) {
-  const matches = message.match(/(?:^|\s)(.+?):(\d+)(?=\s|$|\.|,)/g);
+  const matches = message.match(/\b([^\s]+?):(\d+)\b/g);
   if (matches) {
     return matches.map(match => {
-      const [_, domain, port] = match.match(/(.+?):(\d+)/);
+      const [_, domain, port] = match.match(/([^\s]+?):(\d+)/);
       // Validate domain (you might want to use a more robust validation method)
       if (isValidDomain(domain)) {
         return { domain, port };
@@ -131,6 +131,7 @@ function extractAllDomainsAndPorts(message) {
   }
   return [];
 }
+
 
 // Function to validate a domain (you can customize this validation)
 function isValidDomain(domain) {
