@@ -102,36 +102,45 @@ client.on('messageCreate', async (message) => {
         // Scenario A: User-provided IP matches a pre-specified domain
         message.react('👍');
 
-        console.log('Before checking port for Minecraft server');
-        console.log('Before checking port for Minecraft server');
-        // Check if the port is for a Minecraft server (default is 25565)
-        if (port === '25565') {
-          console.log('Inside block for Minecraft server port');
-          try {
-            // Query Minecraft server details
-            const serverDetails = await queryMinecraftServer(domain, parseInt(port));
-            console.log('After querying Minecraft server');
+    // Before checking port for Minecraft server
+    console.log(`Port before parsing: ${port}`);
+    const parsedPort = parseInt(port);
+    console.log(`Parsed port: ${parsedPort}`);
+    if (!isNaN(parsedPort)) {
+      console.log(`Parsed port type: ${typeof parsedPort}`);
+      console.log(`Parsed port value: ${parsedPort}`);
+      console.log(`Condition: ${parsedPort === 25565}`);
+      // Updated condition to check if parsedPort is a valid integer
+      if (!isNaN(parsedPort)) {
+        console.log('Inside block for Minecraft server port');
+        try {
+          // Query Minecraft server details
+          const serverDetails = await queryMinecraftServer(domain, parsedPort);
+          console.log('After querying Minecraft server');
 
-            // Send Minecraft server details to the channel
-            console.log('Before sending Minecraft server details to the channel');
-            const serverDetailsMessage = `Minecraft Server Details:\n` +
-              `Server IP: ${serverDetails.host}\n` +
-              `Server Port: ${serverDetails.port}\n` +
-              `Version: ${serverDetails.version}\n` +
-              `Players Online: ${serverDetails.players.online}/${serverDetails.players.max}`;
-            message.channel.send(serverDetailsMessage);
-            console.log('After sending Minecraft server details to the channel');
-          } catch (error) {
-            // Log any errors that occur during the Minecraft server query
-            console.log(`Error querying Minecraft server: ${error.message}`);
-            logError(`Error querying Minecraft server: ${error.message}`);
-            sendSummary(webhookUrlError, `Error querying Minecraft server: ${error.message}`);
-            message.react('❌');
-            return; // Added to prevent further execution in case of an error
-          }
-        } else {
-          console.log('Port is not for a Minecraft server');
+          // Extracting MOTD from server details
+          const motd = serverDetails.description.text;
+          console.log(`MOTD: ${motd}`);
+
+          // Send MOTD to the channel
+          console.log('Before sending MOTD to the channel');
+          const motdMessage = `Minecraft Server MOTD:\n${motd}`;
+          message.channel.send(motdMessage);
+          console.log('After sending MOTD to the channel');
+        } catch (error) {
+          // Log any errors that occur during the Minecraft server query
+          console.log(`Error querying Minecraft server: ${error.message}`);
+          logError(`Error querying Minecraft server: ${error.message}`);
+          sendSummary(webhookUrlError, `Error querying Minecraft server: ${error.message}`);
+          message.react('❌');
+          return; // Added to prevent further execution in case of an error
         }
+      } else {
+        console.log('Parsed port is not a valid integer. Skipping Minecraft server details.');
+      }
+    } else {
+      console.log('Parsing failed. Not a valid integer.');
+    }
 
         const summary = `Processed message successfully. User provided domain: ${domain}, Valid IP: ${userDomainIP}, Processing Time: ${processingTime}ms`;
         sendSummary(webhookUrlSummary, summary);
