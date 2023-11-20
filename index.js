@@ -118,7 +118,7 @@ client.on('messageCreate', async (message) => {
 
 // Function to extract all domain and port pairs from the user's message
 function extractAllDomainsAndPorts(message) {
-  const matches = message.match(/(?:^|\s)(.+?):(\d+)(?=\s|$)/g);
+  const matches = message.match(/(?:^|\s)(.+?):(\d+)(?=\s|$|\.|,)/g);
   if (matches) {
     return matches.map(match => {
       const [_, domain, port] = match.match(/(.+?):(\d+)/);
