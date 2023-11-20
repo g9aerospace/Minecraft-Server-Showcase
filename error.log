@@ -16,3 +16,8 @@ error: Error processing message: Cannot read properties of undefined (reading 's
 {"level":"error","message":"Invalid user input: hel1.bbn.oe"}
 {"level":"error","message":"Invalid user input: hel1.bbn.one"}
 {"level":"error","message":"Error processing message: queryA ESERVFAIL guys check out sgp1.bbn.one"}
+{"level":"error","message":"Error processing message: queryA ESERVFAIL guys check out sgp1.bbn.one"}
+{"level":"error","message":"Invalid user input: guys check out `sgp1.bbn.one:30101`"}
+{"level":"error","message":"Error processing message: queryA ESERVFAIL  sgp1.bbn.one"}
+{"level":"error","message":"Invalid user input: g9aerospace.in"}
+{"level":"error","message":"Invalid user input: bricks-network.xyz"}
