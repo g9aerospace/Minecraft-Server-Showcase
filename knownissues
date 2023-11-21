@@ -1,3 +1,4 @@
 other text in same line as ip/domain causes bot to break
 -fixed
 
+the motd banner which is sent is unable to use the otf file. If you find a solution, create a PR!

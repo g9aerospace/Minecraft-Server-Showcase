@@ -1,1 +1,3 @@
-Very basic and stupid stuff
+Rename the `example.env` file to `.env` and fill in the contents. Install the required dependencies from the `package.json`.
+
+PRs are welcome
