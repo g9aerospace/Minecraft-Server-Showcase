@@ -94,10 +94,12 @@ client.on('messageCreate', async (message) => {
           try {
             const serverDetails = await queryMinecraftServer(domain, parsedPort);
             console.log('After querying Minecraft server');
-
+        
             const motd = serverDetails.description.text;
-
+            const playersOnline = serverDetails.players ? serverDetails.players.online : 'N/A';
+        
             console.log(`MOTD: ${motd}`);
+            console.log(`Players Online: ${playersOnline}`);
 
             // Load the background image
             const backgroundImage = await loadImage('minecraft_background.png');
@@ -125,6 +127,13 @@ client.on('messageCreate', async (message) => {
             const embed = {
               title: `${domain}:${parsedPort}`,
               description: `${message.content}`,
+              fields: [
+                {
+                  name: 'Players Online',
+                  value: playersOnline.toString(), // Convert to string to ensure it's a valid field value
+                  inline: true, // You can adjust this based on your embed design
+                },
+              ],
               footer: {
                 text: message.author.username,
               },

@@ -91,3 +91,6 @@ error: Error processing message: Cannot read properties of undefined (reading 's
 {"level":"error","message":"Invalid user input: 2.223.144.35"}
 {"level":"error","message":"Error processing message: queryA ENODATA gg.g9aerospace.in"}
 {"level":"error","message":"Invalid user input: work MUDDAFUCKA WORK"}
+{"level":"error","message":"Invalid user input: hmm"}
+{"level":"error","message":"Error querying Minecraft server: playersOnline is not defined"}
+{"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
