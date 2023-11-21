@@ -43,3 +43,13 @@ error: Error processing message: Cannot read properties of undefined (reading 's
 {"level":"error","message":"Error querying Minecraft server for 2.223.144.35:1234: Socket timed out when connecting to 2.223.144.35:1234"}
 {"level":"error","message":"Error querying Minecraft server: Socket timed out when connecting to 2.223.144.35:1234"}
 {"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
+{"level":"error","message":"Invalid user input: yes"}
+{"level":"error","message":"Invalid user input: fuckyourmom:69"}
+{"level":"error","message":"Invalid user input: Update the Embernodes branch"}
+{"level":"error","message":"Invalid user input: go to Discord Developer -> Rename Showcase moderator -> My Slave/Server Moderator"}
+{"level":"error","message":"Invalid user input: Gg"}
+{"level":"error","message":"Error querying Minecraft server: Port should be >= 0 and < 65536. Received type number (69420)."}
+{"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
+{"level":"error","message":"Error querying Minecraft server: Port should be >= 0 and < 65536. Received type number (257742)."}
+{"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
+{"level":"error","message":"Invalid user input: "}

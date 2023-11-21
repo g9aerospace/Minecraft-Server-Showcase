@@ -121,10 +121,22 @@ client.on('messageCreate', async (message) => {
             // Convert the canvas to a buffer
             const buffer = canvas.toBuffer();
 
-            // Send the image as an attachment
-            const attachment = new MessageAttachment(buffer, 'motd.png');
-            message.channel.send({ files: [attachment] });
+            // Create an embed for sending the MOTD as an image attachment
+            const embed = {
+              title: `${domain}:${parsedPort}`,
+              description: `User's Message: ${message.content}`,
+              footer: {
+                text: message.author.username,
+              },
+              image: {
+                url: `attachment://motd.png`,
+              },
+            };
 
+            // Send the embed with the image attachment
+            const attachment = new MessageAttachment(buffer, 'motd.png');
+            message.channel.send({ embeds: [embed], files: [attachment] });
+            
           } catch (error) {
             console.log(`Error querying Minecraft server: ${error.message}`);
             logError(`Error querying Minecraft server: ${error.message}`);
@@ -149,6 +161,7 @@ client.on('messageCreate', async (message) => {
     }
   }
 });
+
 
 
 function extractAllDomainsAndPorts(message) {
