@@ -72,7 +72,7 @@ client.on('messageCreate', async (message) => {
       const endTime = new Date();
       const processingTime = endTime - startTime;
 
-      const preSpecifiedDomains = ['hel1.bbn.one', 'sgp1.bbn.one', 'mum1.bbn.one', 'fsn1.bbn.one'];
+      const preSpecifiedDomains = ['example1.domain', 'example2.domain']; //replace these domains with the domains/ips you want to whitelist.. as many you want
       const domainToIPMap = await resolveIPs(preSpecifiedDomains);
       const isValidIP = preSpecifiedDomains.some((domain) => domainToIPMap[domain] === userDomainIP);
 
