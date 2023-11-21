@@ -1,10 +1,11 @@
+// Import necessary modules
 const { Client, Intents, MessageAttachment } = require('discord.js');
 const dotenv = require('dotenv');
 const dns = require('dns');
-const winston = require('winston');
 const axios = require('axios');
 const mcPing = require('mc-ping-updated');
-const { createCanvas, loadImage, registerFont } = require('canvas');
+const { createCanvas, loadImage } = require('canvas');
+const { setTimeout } = require('timers/promises');
 
 dotenv.config();
 
@@ -15,8 +16,10 @@ const client = new Client({
   ],
 });
 
-// Read channel ID from environment variable
+// Read channel ID and webhook URLs from environment variables
 const monitoredChannelId = process.env.CHANNEL_ID;
+const webhookUrlInvalidInput = process.env.WEBHOOK_URL_INVALID_INPUT;
+const webhookUrlError = process.env.WEBHOOK_URL_ERROR;
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
@@ -32,9 +35,11 @@ client.on('messageCreate', async (message) => {
 
   if (!userDomainAndPorts.length) {
     const errorMessage = `Invalid user input: ${message.content}`;
-    logError(errorMessage);
-    sendSummary(webhookUrlInvalidInput, errorMessage);
-    message.reply('Please provide a valid domain and port in the format: `domain:port`');
+    logError(errorMessage, webhookUrlInvalidInput);
+    const reply = await message.reply('Please provide a valid domain and port in the format: `domain:port`');
+
+    // Automatically delete both the user's message and the bot's reply after 10 seconds
+    deleteMessagesAfterDelay([message, reply], 10000);
     return;
   }
 
@@ -43,17 +48,21 @@ client.on('messageCreate', async (message) => {
 
     if (!domain) {
       const errorMessage = 'Invalid user input: Missing domain';
-      logError(errorMessage);
-      sendSummary(webhookUrlInvalidInput, errorMessage);
-      message.reply('Please provide a valid domain in the format: `domain:port`');
+      logError(errorMessage, webhookUrlInvalidInput);
+      const reply = await message.reply('Please provide a valid domain in the format: `domain:port`');
+
+      // Automatically delete both the user's message and the bot's reply after 10 seconds
+      deleteMessagesAfterDelay([message, reply], 10000);
       return;
     }
 
     if (!port) {
       const errorMessage = 'Invalid user input: Missing port';
-      logError(errorMessage);
-      sendSummary(webhookUrlInvalidInput, errorMessage);
-      message.reply('Please provide a valid port in the format: `domain:port`');
+      logError(errorMessage, webhookUrlInvalidInput);
+      const reply = await message.reply('Please provide a valid port in the format: `domain:port`');
+
+      // Automatically delete both the user's message and the bot's reply after 10 seconds
+      deleteMessagesAfterDelay([message, reply], 10000);
       return;
     }
 
@@ -84,10 +93,10 @@ client.on('messageCreate', async (message) => {
           try {
             const serverDetails = await queryMinecraftServer(domain, parsedPort);
             console.log('After querying Minecraft server');
-        
+
             const motd = serverDetails.description.text;
             const playersOnline = serverDetails.players ? serverDetails.players.online : 'N/A';
-        
+
             console.log(`MOTD: ${motd}`);
             console.log(`Players Online: ${playersOnline}`);
 
@@ -138,8 +147,7 @@ client.on('messageCreate', async (message) => {
 
           } catch (error) {
             console.log(`Error querying Minecraft server: ${error.message}`);
-            logError(`Error querying Minecraft server: ${error.message}`);
-            sendSummary(webhookUrlError, `Error querying Minecraft server: ${error.message}`);
+            logError(`Error querying Minecraft server: ${error.message}`, webhookUrlError);
             message.react('❌');
             return;
           }
@@ -148,20 +156,31 @@ client.on('messageCreate', async (message) => {
         }
       } else {
         message.react('❌');
-        const errorMessage = `Processed message with invalid domain. User provided domain: ${domain}, Invalid IP: ${userDomainIP}, Processing Time: ${processingTime}ms`;
-        logError(errorMessage);
-        sendSummary(webhookUrlInvalidInput, errorMessage);
+        const errorMessage = `Processed message with an invalid domain. User provided domain: ${domain}, Invalid IP: ${userDomainIP}, Processing Time: ${processingTime}ms`;
+        logError(errorMessage, webhookUrlInvalidInput);
       }
     } catch (error) {
       const errorMessage = `Error processing message: ${error.message}`;
-      logError(errorMessage);
-      sendSummary(webhookUrlInvalidInput, errorMessage);
+      logError(errorMessage, webhookUrlError);
       message.react('❌');
     }
   }
 });
 
+// Add a function to delete messages after a specified delay
+async function deleteMessagesAfterDelay(messages, delay) {
+  // Wait for the specified delay
+  await setTimeout(delay);
 
+  try {
+    // Delete each message in the array
+    for (const msg of messages) {
+      await msg.delete();
+    }
+  } catch (error) {
+    logError(`Error deleting messages: ${error.message}`);
+  }
+}
 
 function extractAllDomainsAndPorts(message) {
   const matches = message.match(/\b([^\s]+?):(\d+)\b/g);
@@ -206,7 +225,7 @@ async function queryMinecraftServer(domain, port) {
   return new Promise((resolve, reject) => {
     mcPing(domain, port, (err, res) => {
       if (err) {
-        logError(`Error querying Minecraft server for ${domain}:${port}: ${err.message}`);
+        logError(`Error querying Minecraft server for ${domain}:${port}: ${err.message}`, webhookUrlError);
         reject(err);
       } else {
         resolve(res);
@@ -219,12 +238,19 @@ async function sendSummary(webhookUrl, summary) {
   try {
     await axios.post(webhookUrl, { content: summary });
   } catch (error) {
-    logger.error(`Failed to send summary to webhook (${webhookUrl}): ${error.message}`);
+    logError(`Failed to send summary to webhook (${webhookUrl}): ${error.message}`, webhookUrlError);
   }
 }
 
-function logError(message) {
-  logger.error(message);
+async function logError(errorMessage, webhookUrl) {
+  console.error(errorMessage);
+
+  try {
+    // Send error log to Discord webhook
+    await axios.post(webhookUrl, { content: errorMessage });
+  } catch (error) {
+    console.error(`Failed to send error log to webhook (${webhookUrl}): ${error.message}`);
+  }
 }
 
 client.login(process.env.BOT_TOKEN);
