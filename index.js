@@ -38,7 +38,7 @@ client.on('messageCreate', async (message) => {
     logError(errorMessage, webhookUrlInvalidInput);
     const reply = await message.reply('Please provide a valid domain and port in the format: `domain:port`');
 
-    // Automatically delete both the user's message and the bot's reply after 10 seconds
+    // Automatically delete only the user's message after 10 seconds
     deleteMessagesAfterDelay([message, reply], 10000);
     return;
   }
@@ -51,7 +51,7 @@ client.on('messageCreate', async (message) => {
       logError(errorMessage, webhookUrlInvalidInput);
       const reply = await message.reply('Please provide a valid domain in the format: `domain:port`');
 
-      // Automatically delete both the user's message and the bot's reply after 10 seconds
+      // Automatically delete only the user's message after 10 seconds
       deleteMessagesAfterDelay([message, reply], 10000);
       return;
     }
@@ -61,7 +61,7 @@ client.on('messageCreate', async (message) => {
       logError(errorMessage, webhookUrlInvalidInput);
       const reply = await message.reply('Please provide a valid port in the format: `domain:port`');
 
-      // Automatically delete both the user's message and the bot's reply after 10 seconds
+      // Automatically delete only the user's message after 10 seconds
       deleteMessagesAfterDelay([message, reply], 10000);
       return;
     }
@@ -143,7 +143,10 @@ client.on('messageCreate', async (message) => {
 
             // Send the embed with the image attachment
             const attachment = new MessageAttachment(buffer, 'motd.png');
-            message.channel.send({ embeds: [embed], files: [attachment] });
+            const sentMessage = await message.channel.send({ embeds: [embed], files: [attachment] });
+
+            // Delete only the user's message after 10 seconds
+            deleteMessagesAfterDelay([message, sentMessage], 10000);
 
           } catch (error) {
             console.log(`Error querying Minecraft server: ${error.message}`);
@@ -167,15 +170,18 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-// Add a function to delete messages after a specified delay
+// Add a function to delete only the user's message after a specified delay
 async function deleteMessagesAfterDelay(messages, delay) {
   // Wait for the specified delay
   await setTimeout(delay);
 
   try {
-    // Delete each message in the array
+    // Delete only the user's message in the array
     for (const msg of messages) {
-      await msg.delete();
+      if (!msg.author.bot) {
+        // Delete only if the message is not from a bot (user's message)
+        await msg.delete();
+      }
     }
   } catch (error) {
     logError(`Error deleting messages: ${error.message}`);
