@@ -73,7 +73,7 @@ client.on('messageCreate', async (message) => {
       const endTime = new Date();
       const processingTime = endTime - startTime;
 
-      const preSpecifiedDomains = ['hel1.bbn.one', 'sgp1.bbn.one', 'mum1.bbn.one', 'fsn1.bbn.one'];
+      const preSpecifiedDomains = ['2.223.144.35'];
       const domainToIPMap = await resolveIPs(preSpecifiedDomains);
       const isValidIP = preSpecifiedDomains.some((domain) => domainToIPMap[domain] === userDomainIP);
 

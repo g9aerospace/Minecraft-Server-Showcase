@@ -39,3 +39,7 @@ error: Error processing message: Cannot read properties of undefined (reading 's
 {"level":"error","message":"Error querying Minecraft server: ENOENT, No such file or directory 'path/to/minecraft_background.png'"}
 {"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
 {"level":"error","message":"Invalid user input: gg"}
+{"level":"error","message":"Invalid user input: 2.223.144.35"}
+{"level":"error","message":"Error querying Minecraft server for 2.223.144.35:1234: Socket timed out when connecting to 2.223.144.35:1234"}
+{"level":"error","message":"Error querying Minecraft server: Socket timed out when connecting to 2.223.144.35:1234"}
+{"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
