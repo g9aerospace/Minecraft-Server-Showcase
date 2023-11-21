@@ -124,7 +124,7 @@ client.on('messageCreate', async (message) => {
             // Create an embed for sending the MOTD as an image attachment
             const embed = {
               title: `${domain}:${parsedPort}`,
-              description: `User's Message: ${message.content}`,
+              description: `${message.content}`,
               footer: {
                 text: message.author.username,
               },
@@ -136,7 +136,7 @@ client.on('messageCreate', async (message) => {
             // Send the embed with the image attachment
             const attachment = new MessageAttachment(buffer, 'motd.png');
             message.channel.send({ embeds: [embed], files: [attachment] });
-            
+
           } catch (error) {
             console.log(`Error querying Minecraft server: ${error.message}`);
             logError(`Error querying Minecraft server: ${error.message}`);
