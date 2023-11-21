@@ -53,3 +53,41 @@ error: Error processing message: Cannot read properties of undefined (reading 's
 {"level":"error","message":"Error querying Minecraft server: Port should be >= 0 and < 65536. Received type number (257742)."}
 {"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
 {"level":"error","message":"Invalid user input: "}
+{"level":"error","message":"Invalid user input: But"}
+{"level":"error","message":"Invalid user input: this is also possible"}
+{"level":"error","message":"Invalid user input: Why would it need to get server name from pterodactyl?"}
+{"level":"error","message":"Invalid user input: Stfu"}
+{"level":"error","message":"Invalid user input: what"}
+{"level":"error","message":"Invalid user input: 0:0"}
+{"level":"error","message":"Invalid user input: it sends the motd of the server in the chat"}
+{"level":"error","message":"Invalid user input: The panel"}
+{"level":"error","message":"Invalid user input: Ohh"}
+{"level":"error","message":"Invalid user input: ???"}
+{"level":"error","message":"Invalid user input: Stfu before i (my lawyer has advised me not to say anything further)"}
+{"level":"error","message":"Processed message with invalid domain. User provided domain: 0.0.0.0, Invalid IP: 0.0.0.0, Processing Time: 4ms"}
+{"level":"error","message":"Invalid user input: Make it delete the original message"}
+{"level":"error","message":"Invalid user input: Ni||ceca||r"}
+{"level":"error","message":"Invalid user input: I will do that. I am keeping the messages for logging purposes.."}
+{"level":"error","message":"Processed message with invalid domain. User provided domain: 0.0.0.0, Invalid IP: 0.0.0.0, Processing Time: 3ms"}
+{"level":"error","message":"Invalid user input: I see mc.hypixel.net"}
+{"level":"error","message":"Invalid user input: only embernodes servers are allowed..."}
+{"level":"error","message":"Invalid user input: dude shut the fuck up"}
+{"level":"error","message":"Invalid user input: They can use subdomains/registered domains too"}
+{"level":"error","message":"Invalid user input: should be able to"}
+{"level":"error","message":"Invalid user input: wait lemme test"}
+{"level":"error","message":"Invalid user input: Aae vereya, ye bat ka grip (...)"}
+{"level":"error","message":"Processed message with invalid domain. User provided domain: uneedportforthis.g9aerospace.in, Invalid IP: 172.67.172.126, Processing Time: 57ms"}
+{"level":"error","message":"Error processing message: queryA ENODATA gg.g9aerospace.in"}
+{"level":"error","message":"Invalid user input: Check dm"}
+{"level":"error","message":"Error processing message: queryA ENODATA gg.g9aerospace.in"}
+{"level":"error","message":"Invalid user input: gg.g9aerospace.in"}
+{"level":"error","message":"Invalid user input: ah.. found the issue"}
+{"level":"error","message":"Invalid user input: well shit"}
+{"level":"error","message":"Error processing message: queryA ENODATA gg.g9aerospace.in"}
+{"level":"error","message":"Invalid user input: gg.g9aerospace.in"}
+{"level":"error","message":"Error processing message: queryA ENODATA gg.g9aerospace.in"}
+{"level":"error","message":"Invalid user input: gg.g9aerospace.in"}
+{"level":"error","message":"Error processing message: queryA ENODATA gg.g9aerospace.in"}
+{"level":"error","message":"Invalid user input: 2.223.144.35"}
+{"level":"error","message":"Error processing message: queryA ENODATA gg.g9aerospace.in"}
+{"level":"error","message":"Invalid user input: work MUDDAFUCKA WORK"}
