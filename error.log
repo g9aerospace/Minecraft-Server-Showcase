@@ -94,3 +94,15 @@ error: Error processing message: Cannot read properties of undefined (reading 's
 {"level":"error","message":"Invalid user input: hmm"}
 {"level":"error","message":"Error querying Minecraft server: playersOnline is not defined"}
 {"level":"error","message":"Failed to send summary to webhook (undefined): connect ECONNREFUSED ::1:80"}
+{"level":"error","message":"Invalid user input: "}
+{"level":"error","message":"Invalid user input: Whoinasked"}
+{"level":"error","message":"Invalid user input: wtf"}
+{"level":"error","message":"Error processing message: queryA ENOTFOUND 696969.69"}
+{"level":"error","message":"Invalid user input: gg bro monitoring all channels 💀"}
+{"level":"error","message":"Error processing message: queryA ENODATA ello.nigga.gg.g9aerospace.in"}
+{"level":"error","message":"Error processing message: queryA ENODATA ello.gg.g9aerospace.in"}
+{"level":"error","message":"Error processing message: queryA ENODATA lenin.gg.g9aerospace.in"}
+{"level":"error","message":"Invalid user input: lmao"}
+{"level":"error","message":"Invalid user input: i forgot"}
+{"level":"error","message":"Invalid user input: wildcards arent enabled for this 💀"}
+{"level":"error","message":"Processed message with invalid domain. User provided domain: 0.0.0.0, Invalid IP: 0.0.0.0, Processing Time: 4ms"}

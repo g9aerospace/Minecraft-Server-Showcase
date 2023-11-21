@@ -15,28 +15,18 @@ const client = new Client({
   ],
 });
 
-const logger = winston.createLogger({
-  level: 'error',
-  format: winston.format.json(),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-  ],
-});
-
-const webhookUrlSummary = process.env.WEBHOOK_URL_SUMMARY;
-const webhookUrlInvalidInput = process.env.WEBHOOK_URL_INVALID_INPUT;
-const webhookUrlError = process.env.WEBHOOK_URL_ERROR;
-
-// Load the Minecraft font
-registerFont('MinecraftBold-nMK1.otf', { family: 'Minecraft' });
+// Read channel ID from environment variable
+const monitoredChannelId = process.env.CHANNEL_ID;
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
 client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
+  if (message.author.bot || message.channel.id !== monitoredChannelId) {
+    // Ignore messages from bots and channels other than the specified one
+    return;
+  }
 
   const userDomainAndPorts = extractAllDomainsAndPorts(message.content);
 
