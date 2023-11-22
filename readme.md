@@ -34,7 +34,6 @@ To install the bot, follow these steps:
     Create a .env file and add the following:
 
     ```
-    .env
         CHANNEL_ID=YOUR_DISCORD_CHANNEL_ID
         WEBHOOK_URL_INVALID_INPUT=YOUR_DISCORD_WEBHOOK_URL_INVALID_INPUT
         WEBHOOK_URL_ERROR=YOUR_DISCORD_WEBHOOK_URL_ERROR
@@ -50,11 +49,14 @@ To install the bot, follow these steps:
     ```
 
 5. Usage
+
     Send a message in the specified channel and provide valid domain:port combinations to showcase Minecraft servers.
 
 6. Support and Feedback
+
     If you encounter any issues or have suggestions, feel free to open an issue.
 
-7. Connect with Me
-    Website: g9aerospace.in
-    YouTube: G9AEROSPACEYT
+## Additional Links
+
+- [Website](https://g9aerospace.in/)
+- [YouTube](https://www.youtube.com/@G9AEROSPACEYT)
