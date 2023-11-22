@@ -151,21 +151,21 @@ client.on('messageCreate', async (message) => {
           } catch (error) {
             console.log(`Error querying Minecraft server: ${error.message}`);
             logError(`Error querying Minecraft server: ${error.message}`, webhookUrlError);
-            message.react('❌');
+            message.react('❗');
             return;
           }
         } else {
           console.log('Parsed port is not a valid integer. Skipping Minecraft server details.');
         }
       } else {
-        message.react('❌');
+        message.react('⚠');
         const errorMessage = `Processed message with an invalid domain. User provided domain: ${domain}, Invalid IP: ${userDomainIP}, Processing Time: ${processingTime}ms`;
         logError(errorMessage, webhookUrlInvalidInput);
       }
     } catch (error) {
       const errorMessage = `Error processing message: ${error.message}`;
       logError(errorMessage, webhookUrlError);
-      message.react('❌');
+      message.react('👀');
     }
   }
 });
