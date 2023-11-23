@@ -1,5 +1,5 @@
 // mc.js
-const { Client, Intents, GatewayIntentBits, MessageEmbed } = require('discord.js');
+const { Client, Intents, MessageEmbed } = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
@@ -18,6 +18,9 @@ const mcBot = new Client({
 
 mcBot.login(process.env.BOT_TOKEN);
 
+// Set up a Set to track users who completed the form
+const usersWhoCompletedForm = new Set();
+
 mcBot.once('ready', async () => {
   try {
     // Purge messages in PANEL_CHANNEL_ID
@@ -30,9 +33,9 @@ mcBot.once('ready', async () => {
       console.error('Error purging messages:', error);
     }
 
-    // Send form with a button
+    // Send form with "Edit" and "Send" buttons
     const formMessage = await panelChannel.send({
-      content: 'Please click the button to provide your Minecraft server information.',
+      content: 'Please click the buttons to provide or view your Minecraft server information.',
       components: [
         {
           type: 'ACTION_ROW',
@@ -41,25 +44,85 @@ mcBot.once('ready', async () => {
               type: 'BUTTON',
               style: 'PRIMARY',
               customId: 'provide_info',
-              label: 'Provide Server Info',
+              label: 'Add/Edit Server Info',
+            },
+            {
+              type: 'BUTTON',
+              style: 'PRIMARY',
+              customId: 'view_info',
+              label: 'Showcase your server!',
             },
           ],
         },
       ],
     });
 
-    // Track users who completed the form for the first time
-    const usersWhoCompletedForm = new Set();
-
     // Event listener for button click
     mcBot.on('interactionCreate', async (interaction) => {
       if (!interaction.isButton()) return;
-      if (interaction.customId === 'provide_info') {
-        const user = await interaction.user.fetch();
+      const user = await interaction.user.fetch();
 
+      // Handle "Provide Server Info" button click
+      if (interaction.customId === 'provide_info') {
         // Check if the user has already completed the form
         if (usersWhoCompletedForm.has(user.id)) {
-          await user.send('You have already completed the form. Thank you!');
+          // Inform the user that they can edit their previous submission
+          await user.send('You have already completed the form. If you need to make changes, you can edit your previous message.');
+
+          // Fetch the existing user data from the file
+          const userDataFilePath = `userdata/${user.id}.json`;
+
+          try {
+            const existingUserData = JSON.parse(fs.readFileSync(userDataFilePath, 'utf-8'));
+
+            // Inform the user about their existing data and provide an option to edit
+            await user.send(`Existing Server Address: ${existingUserData.address || 'Not provided'}`);
+            await user.send('If you want to edit the server address, click the "Edit" button below.');
+
+            // Provide an edit button
+            const editButtonMessage = await user.send({
+              components: [
+                {
+                  type: 'ACTION_ROW',
+                  components: [
+                    {
+                      type: 'BUTTON',
+                      style: 'PRIMARY',
+                      customId: 'edit_info',
+                      label: 'Edit',
+                    },
+                  ],
+                },
+              ],
+            });
+
+            // Event listener for the edit button click
+            const filterEditButton = (buttonInteraction) => buttonInteraction.customId === 'edit_info' && buttonInteraction.user.id === user.id;
+            const editButtonInteraction = await editButtonMessage.awaitMessageComponent({ filter: filterEditButton, time: 60000 });
+
+            // Check if the user clicked the edit button
+            if (editButtonInteraction) {
+              // Allow the user to edit their previous message
+              await user.send('Please provide the updated address of your Minecraft server in the format domain:port or ip:port, whichever suits you.');
+
+              const filterEditAddress = (msg) => msg.author.id === user.id;
+              const responseEditAddress = await user.dmChannel.awaitMessages({ filter: filterEditAddress, max: 1, time: 60000, errors: ['time'] });
+
+              const updatedAddress = responseEditAddress.first().content;
+
+              // Update the existing user data
+              existingUserData.address = updatedAddress;
+              fs.writeFileSync(userDataFilePath, JSON.stringify(existingUserData));
+
+              await user.send('Your server address has been updated. Thank you!');
+            } else {
+              // Handle the case where the user didn't click the edit button
+              await user.send('You chose not to edit your previous message. If you have any other questions, feel free to ask.');
+            }
+          } catch (error) {
+            console.error('Error reading existing user data:', error);
+            await user.send('An error occurred while trying to retrieve your existing data. Please try again later.');
+          }
           return;
         }
 
@@ -119,6 +182,29 @@ mcBot.once('ready', async () => {
             await user.send('The provided IP address/domain does not match with 2.223.144.35. Please use a proper IP address/domain.');
           }
         });
+      }
+
+      // Handle "View Server Info" button click
+      if (interaction.customId === 'view_info') {
+        // Fetch the existing user data from the file
+        const userDataFilePath = `userdata/${user.id}.json`;
+
+        try {
+          const existingUserData = JSON.parse(fs.readFileSync(userDataFilePath, 'utf-8'));
+
+          // Send an embed with pre-existing data
+          const embedChannel = await mcBot.channels.fetch(process.env.CHANNEL_ID);
+
+          const embed = new MessageEmbed()
+            .setTitle(`Server Info: ${existingUserData.address || 'Not provided'}`)
+            .setDescription(existingUserData.inviteMessage || 'No invite message provided')
+            .setFooter(`Submitted by: ${user.tag}`, user.displayAvatarURL());
+
+          await embedChannel.send({ embeds: [embed] });
+        } catch (error) {
+          console.error('Error reading existing user data:', error);
+          await user.send('An error occurred while trying to retrieve your existing data. Please try again later.');
+        }
       }
     });
 
