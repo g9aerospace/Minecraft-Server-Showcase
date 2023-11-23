@@ -4,7 +4,8 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
 
-const client = new Client({
+// Main bot setup
+const mainBot = new Client({
   intents: [
     Intents.FLAGS.GUILDS,
     Intents.FLAGS.GUILD_MESSAGES,
@@ -12,23 +13,23 @@ const client = new Client({
   ],
 });
 
-const commands = [];
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const mainCommands = [];
+const mainCommandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
-for (const file of commandFiles) {
+for (const file of mainCommandFiles) {
   const command = require(`./commands/${file}`);
-  commands.push(command.data.toJSON());
+  mainCommands.push(command.data.toJSON());
 }
 
-const rest = new REST({ version: '9' }).setToken(process.env.BOT_TOKEN);
+const mainRest = new REST({ version: '9' }).setToken(process.env.BOT_TOKEN);
 
 (async () => {
   try {
     console.log('Started refreshing application (/) commands.');
 
-    await rest.put(
+    await mainRest.put(
       Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
-      { body: commands },
+      { body: mainCommands },
     );
 
     console.log('Successfully reloaded application (/) commands.');
@@ -37,7 +38,7 @@ const rest = new REST({ version: '9' }).setToken(process.env.BOT_TOKEN);
   }
 })();
 
-client.on('interactionCreate', async (interaction) => {
+mainBot.on('interactionCreate', async (interaction) => {
   if (!interaction.isCommand()) return;
 
   const { commandName } = interaction;
@@ -61,4 +62,7 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-client.login(process.env.BOT_TOKEN);
+mainBot.login(process.env.BOT_TOKEN);
+
+// Additional channel monitoring setup
+const channelMonitor = require('./mc');
