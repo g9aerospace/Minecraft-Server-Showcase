@@ -137,29 +137,44 @@ mcBot.once('ready', async () => {
               ],
             });
 
-            // Event listener for the edit button click
-            const filterEditButton = (buttonInteraction) => buttonInteraction.customId === 'edit_info' && buttonInteraction.user.id === user.id;
-            const editButtonInteraction = await editButtonMessage.awaitMessageComponent({ filter: filterEditButton, time: 60000 });
+        // Event listener for the edit button click
+        const filterEditButton = (buttonInteraction) => buttonInteraction.customId === 'edit_info' && buttonInteraction.user.id === user.id;
+        const editButtonInteraction = await editButtonMessage.awaitMessageComponent({ filter: filterEditButton, time: 60000 });
 
-            // Check if the user clicked the edit button
-            if (editButtonInteraction) {
-              // Allow the user to edit their previous message
-              await user.send('Please provide the updated address of your Minecraft server in the format domain:port or ip:port, whichever suits you.');
+        // Check if the user clicked the edit button
+        if (editButtonInteraction) {
+        // Allow the user to edit their previous message
+        await user.send('Please provide the updated address of your Minecraft server in the format domain:port or ip:port, whichever suits you.');
 
-              const filterEditAddress = (msg) => msg.author.id === user.id;
-              const responseEditAddress = await user.dmChannel.awaitMessages({ filter: filterEditAddress, max: 1, time: 60000, errors: ['time'] });
+        const filterEditAddress = (msg) => msg.author.id === user.id;
+        const responseEditAddress = await user.dmChannel.awaitMessages({ filter: filterEditAddress, max: 1, time: 60000, errors: ['time'] });
 
-              const updatedAddress = responseEditAddress.first().content;
+        const updatedAddress = responseEditAddress.first().content;
 
-              // Update the existing user data
-              existingUserData.address = updatedAddress;
-              fs.writeFileSync(userDataFilePath, JSON.stringify(existingUserData));
+        // Ask for an updated invite message
+        await user.send('Please provide the updated invite message for your Minecraft server.');
 
-              await user.send('Your server address has been updated. Thank you!');
-            } else {
-              // Handle the case where the user didn't click the edit button
-              await user.send('You chose not to edit your previous message. If you have any other questions, feel free to ask.');
-            }
+        const filterEditInviteMessage = (msg) => msg.author.id === user.id;
+        const responseEditInviteMessage = await user.dmChannel.awaitMessages({
+            filter: filterEditInviteMessage,
+            max: 1,
+            time: 60000,
+            errors: ['time'],
+        });
+
+        const updatedInviteMessage = responseEditInviteMessage.first().content;
+
+        // Update the existing user data
+        existingUserData.address = updatedAddress;
+        existingUserData.inviteMessage = updatedInviteMessage;
+        fs.writeFileSync(userDataFilePath, JSON.stringify(existingUserData));
+
+        await user.send('Your server address and invite message have been updated. Thank you!');
+        } else {
+        // Handle the case where the user didn't click the edit button
+        await user.send('You chose not to edit your previous message. If you have any other questions, feel free to ask.');
+        }
+
           } catch (error) {
             console.error('Error reading existing user data:', error);
             await user.send('An error occurred while trying to retrieve your existing data. Please try again later.');
