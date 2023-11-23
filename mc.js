@@ -1,5 +1,5 @@
 // mc.js
-const { Client, Intents, GatewayIntentBits } = require('discord.js');
+const { Client, Intents, GatewayIntentBits, MessageEmbed } = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
@@ -48,12 +48,25 @@ mcBot.once('ready', async () => {
       ],
     });
 
+    // Track users who completed the form for the first time
+    const usersWhoCompletedForm = new Set();
+
     // Event listener for button click
     mcBot.on('interactionCreate', async (interaction) => {
       if (!interaction.isButton()) return;
       if (interaction.customId === 'provide_info') {
-        // DM the user and ask for server information
         const user = await interaction.user.fetch();
+
+        // Check if the user has already completed the form
+        if (usersWhoCompletedForm.has(user.id)) {
+          await user.send('You have already completed the form. Thank you!');
+          return;
+        }
+
+        // Mark the user as having completed the form
+        usersWhoCompletedForm.add(user.id);
+
+        // DM the user and ask for server information
         await user.send('Please provide the address of your Minecraft server in the format domain:port or ip:port, whichever suits you.');
 
         const filter = (msg) => msg.author.id === user.id;
@@ -92,6 +105,16 @@ mcBot.once('ready', async () => {
             fs.writeFileSync(`userdata/${user.id}.json`, JSON.stringify(userData));
 
             await user.send('Thank you for providing the information. Your data has been recorded.');
+
+            // Send an embed to the specified channel
+            const embedChannel = await mcBot.channels.fetch(process.env.CHANNEL_ID);
+
+            const embed = new MessageEmbed()
+              .setTitle(`Server Info: ${userProvidedAddress}`)
+              .setDescription(inviteMessage)
+              .setFooter(`Submitted by: ${user.tag}`, user.displayAvatarURL());
+
+            await embedChannel.send({ embeds: [embed] });
           } else {
             await user.send('The provided IP address/domain does not match with 2.223.144.35. Please use a proper IP address/domain.');
           }
