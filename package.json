@@ -12,9 +12,12 @@
   "author": "G9 Aerospace",
   "license": "ISC",
   "dependencies": {
+    "@discordjs/builders": "^1.7.0",
+    "@discordjs/rest": "^2.2.0",
     "axios": "^1.6.2",
     "canvas": "^2.11.2",
-    "discord.js": "^13.3.1",
+    "discord-api-types": "^0.37.65",
+    "discord.js": "^13.17.1",
     "dns": "^0.1.2",
     "dotenv": "^16.3.1",
     "jimp": "^0.22.10",
