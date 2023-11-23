@@ -7,7 +7,6 @@ const dns = require('dns');
 
 require('dotenv').config();
 
-// Discord bot setup
 const mcBot = new Client({
   intents: [
     Intents.FLAGS.GUILDS,
@@ -20,14 +19,12 @@ mcBot.login(process.env.BOT_TOKEN);
 
 // Set up a Set to track users who completed the form
 const usersWhoCompletedForm = new Set();
-
-// Add this at the beginning of your code
 const userLastShowcaseTime = new Map();
 const SHOWCASE_COOLDOWN = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 mcBot.once('ready', async () => {
   try {
-    // Purge messages in PANEL_CHANNEL_ID
+    // Purge messages in PANEL Channel
     const panelChannel = await mcBot.channels.fetch(process.env.PANEL_CHANNEL_ID);
 
     try {
