@@ -28,6 +28,33 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
+// Add a function to delete all messages after a specified delay
+async function deleteAllMessagesWithTimeout(messages, delay) {
+  try {
+    // Wait for the specified delay
+    await setTimeout(delay);
+
+    // Delete all messages in the array
+    for (const msg of messages) {
+      await msg.delete();
+      console.log(`Deleted message from ${msg.author.tag}: "${msg.content}"`);
+    }
+  } catch (error) {
+    logError(`Error deleting messages: ${error.message}`);
+  }
+}
+
+// Add a function to delete a user's message after a 10-second delay
+async function deleteUserMessageAfterDelay(message) {
+  try {
+    await setTimeout(10000);
+    await message.delete();
+    console.log(`Deleted user's message: "${message.content}"`);
+  } catch (error) {
+    logError(`Error deleting user's message: ${error.message}`);
+  }
+}
+
 client.on('messageCreate', async (message) => {
   try {
     if (message.author.bot || message.channel.id !== monitoredChannelId) {
@@ -44,8 +71,8 @@ client.on('messageCreate', async (message) => {
       logError(errorMessage, webhookUrlInvalidInput);
       const reply = await message.reply('Please provide a valid domain and port in the format: `domain:port`');
 
-      // Automatically delete only the user's message after 10 seconds
-      await deleteMessagesWithTimeout([message, reply], 10000);
+      // Automatically delete all messages after 10 seconds
+      await deleteAllMessagesWithTimeout([message, reply], 10000);
       return;
     }
 
@@ -57,8 +84,8 @@ client.on('messageCreate', async (message) => {
         logError(errorMessage, webhookUrlInvalidInput);
         const reply = await message.reply('Please provide a valid domain in the format: `domain:port`');
 
-        // Automatically delete only the user's message after 10 seconds
-        await deleteMessagesWithTimeout([message, reply], 10000);
+        // Automatically delete all messages after 10 seconds
+        await deleteAllMessagesWithTimeout([message, reply], 10000);
         return;
       }
 
@@ -67,8 +94,8 @@ client.on('messageCreate', async (message) => {
         logError(errorMessage, webhookUrlInvalidInput);
         const reply = await message.reply('Please provide a valid port in the format: `domain:port`');
 
-        // Automatically delete only the user's message after 10 seconds
-        await deleteMessagesWithTimeout([message, reply], 10000);
+        // Automatically delete all messages after 10 seconds
+        await deleteAllMessagesWithTimeout([message, reply], 10000);
         return;
       }
 
@@ -85,8 +112,6 @@ client.on('messageCreate', async (message) => {
         console.log(`isValidIP: ${isValidIP}`);
 
         if (isValidIP) {
-          message.react('👍');
-
           const parsedPort = parseInt(port);
 
           console.log(`Parsed port: ${parsedPort}`);
@@ -151,28 +176,24 @@ client.on('messageCreate', async (message) => {
               const attachment = new MessageAttachment(buffer, 'motd.png');
               const sentMessage = await message.channel.send({ embeds: [embed], files: [attachment] });
 
-              // After successfully sending the embed, timeout the user for 24 hours
-              await deleteMessagesWithTimeout([message, sentMessage], 24 * 60 * 60 * 1000); // 24 hours timeout
-              userTimeouts.set(message.author.id, Date.now() + 24 * 60 * 60 * 1000); // Set timeout for the user
+              // Delete the user's message after a 10-second delay
+              await deleteUserMessageAfterDelay(message);
 
             } catch (error) {
               console.log(`Error querying Minecraft server: ${error.message}`);
               logError(`Error querying Minecraft server: ${error.message}`, webhookUrlError);
-              message.react('❗');
               return;
             }
           } else {
             console.log('Parsed port is not a valid integer. Skipping Minecraft server details.');
           }
         } else {
-          message.react('⚠');
           const errorMessage = `Processed message with an invalid domain. User provided domain: ${domain}, Invalid IP: ${userDomainIP}, Processing Time: ${processingTime}ms`;
           logError(errorMessage, webhookUrlInvalidInput);
         }
       } catch (error) {
         const errorMessage = `Error processing message: ${error.message}`;
         logError(errorMessage, webhookUrlError);
-        message.react('👀');
       }
     }
   } catch (error) {
@@ -180,25 +201,6 @@ client.on('messageCreate', async (message) => {
     logError(`Error processing message event: ${error.message}`, webhookUrlError);
   }
 });
-
-// Add a function to delete only the user's message after a specified delay, with extended timeout
-async function deleteMessagesWithTimeout(messages, delay) {
-  try {
-    // Wait for the specified delay
-    await setTimeout(delay);
-
-    // Delete only the user's message in the array
-    for (const msg of messages) {
-      if (!msg.author.bot) {
-        // Delete only if the message is not from a bot (user's message)
-        await msg.delete();
-        console.log(`Deleted message from user ${msg.author.tag}: "${msg.content}"`);
-      }
-    }
-  } catch (error) {
-    logError(`Error deleting messages: ${error.message}`);
-  }
-}
 
 function extractAllDomainsAndPorts(message) {
   const matches = message.match(/\b([^\s]+?):(\d+)\b/g);
