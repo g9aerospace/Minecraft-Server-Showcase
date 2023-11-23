@@ -21,6 +21,10 @@ mcBot.login(process.env.BOT_TOKEN);
 // Set up a Set to track users who completed the form
 const usersWhoCompletedForm = new Set();
 
+// Add this at the beginning of your code
+const userLastShowcaseTime = new Map();
+const SHOWCASE_COOLDOWN = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
 mcBot.once('ready', async () => {
   try {
     // Purge messages in PANEL_CHANNEL_ID
@@ -61,6 +65,43 @@ mcBot.once('ready', async () => {
     mcBot.on('interactionCreate', async (interaction) => {
       if (!interaction.isButton()) return;
       const user = await interaction.user.fetch();
+
+      // Handle "View Server Info" button click
+      if (interaction.customId === 'view_info') {
+        // Check if the user has showcased their server within the cooldown period
+        const lastShowcaseTime = userLastShowcaseTime.get(user.id) || 0;
+        const timeSinceLastShowcase = Date.now() - lastShowcaseTime;
+
+        if (timeSinceLastShowcase < SHOWCASE_COOLDOWN) {
+          const remainingCooldown = SHOWCASE_COOLDOWN - timeSinceLastShowcase;
+          const remainingCooldownHours = Math.ceil(remainingCooldown / (60 * 60 * 1000));
+
+          await user.send(`You can showcase your server only once every 24 hours. Please wait for ${remainingCooldownHours} hours before showcasing again.`);
+          return;
+        }
+
+        // Fetch the existing user data from the file
+        const userDataFilePath = `userdata/${user.id}.json`;
+
+        try {
+          // Send an embed with pre-existing data
+          const existingUserData = JSON.parse(fs.readFileSync(userDataFilePath, 'utf-8'));
+          const embedChannel = await mcBot.channels.fetch(process.env.CHANNEL_ID);
+
+          const embed = new MessageEmbed()
+            .setTitle(`Server Info: ${existingUserData.address || 'Not provided'}`)
+            .setDescription(existingUserData.inviteMessage || 'No invite message provided')
+            .setFooter(`Submitted by: ${user.tag}`, user.displayAvatarURL());
+
+          await embedChannel.send({ embeds: [embed] });
+
+          // Update the last showcase time for the user
+          userLastShowcaseTime.set(user.id, Date.now());
+        } catch (error) {
+          console.error('Error reading existing user data:', error);
+          await user.send('An error occurred while trying to retrieve your existing data. Please try again later.');
+        }
+      }
 
       // Handle "Provide Server Info" button click
       if (interaction.customId === 'provide_info') {
@@ -178,33 +219,13 @@ mcBot.once('ready', async () => {
               .setFooter(`Submitted by: ${user.tag}`, user.displayAvatarURL());
 
             await embedChannel.send({ embeds: [embed] });
+
+            // Update the last showcase time for the user
+            userLastShowcaseTime.set(user.id, Date.now());
           } else {
             await user.send('The provided IP address/domain does not match with 2.223.144.35. Please use a proper IP address/domain.');
           }
         });
-      }
-
-      // Handle "View Server Info" button click
-      if (interaction.customId === 'view_info') {
-        // Fetch the existing user data from the file
-        const userDataFilePath = `userdata/${user.id}.json`;
-
-        try {
-          const existingUserData = JSON.parse(fs.readFileSync(userDataFilePath, 'utf-8'));
-
-          // Send an embed with pre-existing data
-          const embedChannel = await mcBot.channels.fetch(process.env.CHANNEL_ID);
-
-          const embed = new MessageEmbed()
-            .setTitle(`Server Info: ${existingUserData.address || 'Not provided'}`)
-            .setDescription(existingUserData.inviteMessage || 'No invite message provided')
-            .setFooter(`Submitted by: ${user.tag}`, user.displayAvatarURL());
-
-          await embedChannel.send({ embeds: [embed] });
-        } catch (error) {
-          console.error('Error reading existing user data:', error);
-          await user.send('An error occurred while trying to retrieve your existing data. Please try again later.');
-        }
       }
     });
 
