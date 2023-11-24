@@ -4,6 +4,7 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
 const dns = require('dns');
+const util = require('minecraft-server-util'); // Import the minecraft-server-util library
 
 require('dotenv').config();
 
@@ -85,17 +86,30 @@ mcBot.once('ready', async () => {
           const existingUserData = readUserData(userDataFilePath, user);
           if (!existingUserData) return;
 
-          const embedChannel = await mcBot.channels.fetch(process.env.CHANNEL_ID);
+          // Query Minecraft server for MOTD
+          try {
+            const response = await util.status(existingUserData.address.split(':')[0], parseInt(existingUserData.address.split(':')[1]));
 
-          const embed = new MessageEmbed()
-            .setTitle(`Server Info: ${existingUserData.address || 'Not provided'}`)
-            .setDescription(existingUserData.inviteMessage || 'No invite message provided')
-            .setFooter(`Submitted by: ${user.tag}`, user.displayAvatarURL());
+            // Get MOTD from the server response
+            const motd = response.description ? response.description.text || 'No MOTD available' : 'No MOTD available';
 
-          await embedChannel.send({ embeds: [embed] });
+            // Send an embed with server information and MOTD
+            const embedChannel = await mcBot.channels.fetch(process.env.CHANNEL_ID);
 
-          // Update the last showcase time for the user
-          userLastShowcaseTime.set(user.id, Date.now());
+            const embed = new MessageEmbed()
+              .setTitle(`Server Info: ${existingUserData.address}`)
+              .setDescription(existingUserData.inviteMessage || 'No invite message provided')
+              .addFields({ name: 'MOTD', value: motd })
+              .setFooter({ text: `Submitted by: ${user.tag}`, iconURL: user.displayAvatarURL() });
+
+            await embedChannel.send({ embeds: [embed] });
+
+            // Update the last showcase time for the user
+            userLastShowcaseTime.set(user.id, Date.now());
+          } catch (error) {
+            console.error('Error querying Minecraft server:', error);
+            await user.send('Error querying the Minecraft server. Please try again later.');
+          }
         } catch (error) {
           console.error('Error reading existing user data:', error);
           await user.send('An error occurred while trying to retrieve your existing data. Please try again later.');
@@ -196,6 +210,14 @@ mcBot.once('ready', async () => {
         const [userProvidedIP, userProvidedPort] = userProvidedAddress.split(':');
         const dnsQuery = userProvidedIP;  // Only pass the IP address for DNS resolution
 
+        // Validate userProvidedPort before calling util.status
+        const parsedUserProvidedPort = parseInt(userProvidedPort);
+        if (isNaN(parsedUserProvidedPort) || parsedUserProvidedPort <= 0) {
+          console.error('Invalid port provided:', userProvidedPort);
+          await user.send('Please provide a valid port number for your Minecraft server.');
+          return;
+        }
+
         // Resolve IP address
         dns.resolve4(dnsQuery, async (err, addresses) => {
           if (err) {
@@ -224,18 +246,30 @@ mcBot.once('ready', async () => {
 
             await user.send('Thank you for providing the information. Your data has been recorded.');
 
-            // Send an embed to the specified channel
-            const embedChannel = await mcBot.channels.fetch(process.env.CHANNEL_ID);
+            // Query Minecraft server for MOTD
+            try {
+              const response = await util.status(userProvidedIP, parsedUserProvidedPort);
 
-            const embed = new MessageEmbed()
-              .setTitle(`Server Info: ${userProvidedAddress}`)
-              .setDescription(inviteMessage)
-              .setFooter(`Submitted by: ${user.tag}`, user.displayAvatarURL());
+              // Get MOTD from the server response
+              const motd = response.description ? response.description.text || 'No MOTD available' : 'No MOTD available';
 
-            await embedChannel.send({ embeds: [embed] });
+              // Send an embed to the specified channel
+              const embedChannel = await mcBot.channels.fetch(process.env.CHANNEL_ID);
 
-            // Update the last showcase time for the user
-            userLastShowcaseTime.set(user.id, Date.now());
+              const embed = new MessageEmbed()
+                .setTitle(`Server Info: ${userProvidedAddress}`)
+                .setDescription(inviteMessage)
+                .addFields({ name: 'MOTD', value: motd })
+                .setFooter({ text: `Submitted by: ${user.tag}`, iconURL: user.displayAvatarURL() });
+
+              await embedChannel.send({ embeds: [embed] });
+
+              // Update the last showcase time for the user
+              userLastShowcaseTime.set(user.id, Date.now());
+            } catch (error) {
+              console.error('Error querying Minecraft server:', error);
+              user.send('Error querying the Minecraft server. Please try again later.');
+            }
           } else {
             await user.send('The provided IP address/domain does not match with 2.223.144.35. Please use a proper IP address/domain.');
           }
@@ -248,6 +282,7 @@ mcBot.once('ready', async () => {
     console.error(error);
   }
 });
+
 
 // Log errors to a file
 mcBot.on('error', (error) => {
