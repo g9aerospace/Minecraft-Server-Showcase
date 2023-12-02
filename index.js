@@ -1,15 +1,18 @@
-require('dotenv').config();
-const { Client, Intents } = require('discord.js');
-const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v9');
-const fs = require('fs');
+// Import necessary modules
+const { Client, Intents, MessageAttachment } = require('discord.js');
+const dotenv = require('dotenv');
+const dns = require('dns');
+const axios = require('axios');
+const mcPing = require('mc-ping-updated');
+const { createCanvas, loadImage } = require('canvas');
+const { setTimeout } = require('timers/promises');
 
-// Main bot setup
-const mainBot = new Client({
+dotenv.config();
+
+const client = new Client({
   intents: [
     Intents.FLAGS.GUILDS,
     Intents.FLAGS.GUILD_MESSAGES,
-    Intents.FLAGS.MESSAGE_CONTENT,
   ],
 });
 
@@ -34,8 +37,8 @@ client.on('messageCreate', async (message) => {
     const errorMessage = `Invalid user input: ${message.content}`;
     logError(errorMessage, webhookUrlInvalidInput);
     const reply = await message.reply('Please provide a valid domain and port in the format: `domain:port`');
-
-    // Automatically delete only the user's message after 10 seconds
+  
+    // Automatically delete both the user's and bot's messages after 10 seconds
     deleteMessagesAfterDelay([message, reply], 10000);
     return;
   }
@@ -69,7 +72,7 @@ client.on('messageCreate', async (message) => {
       const endTime = new Date();
       const processingTime = endTime - startTime;
 
-      const preSpecifiedDomains = ['example1.domain', 'example2.domain']; //replace these domains with the domains/ips you want to whitelist.. as many you want
+      const preSpecifiedDomains = ['51.255.80.17', '46.250.234.25', '46.250.234.35', '2.223.144.35']; 
       const domainToIPMap = await resolveIPs(preSpecifiedDomains);
       const isValidIP = preSpecifiedDomains.some((domain) => domainToIPMap[domain] === userDomainIP);
 
@@ -142,74 +145,126 @@ client.on('messageCreate', async (message) => {
             const attachment = new MessageAttachment(buffer, 'motd.png');
             const sentMessage = await message.channel.send({ embeds: [embed], files: [attachment] });
 
-            // Delete only the user's message after 10 seconds
-            deleteMessagesAfterDelay([message, sentMessage], 10000);
+            // Delete only the user's message after 10 seconds, excluding the sent message
+            deleteMessagesAfterDelay([message], 10000, sentMessage.id);
 
           } catch (error) {
             console.log(`Error querying Minecraft server: ${error.message}`);
             logError(`Error querying Minecraft server: ${error.message}`, webhookUrlError);
             message.react('❌');
+            // Delete only the user's message after 10 seconds
+            deleteMessagesAfterDelay([message], 10000);
             return;
           }
         } else {
           console.log('Parsed port is not a valid integer. Skipping Minecraft server details.');
+          // Delete only the user's message after 10 seconds
+          deleteMessagesAfterDelay([message], 10000);
         }
       } else {
         message.react('❌');
         const errorMessage = `Processed message with an invalid domain. User provided domain: ${domain}, Invalid IP: ${userDomainIP}, Processing Time: ${processingTime}ms`;
         logError(errorMessage, webhookUrlInvalidInput);
+        // Delete only the user's message after 10 seconds
+        deleteMessagesAfterDelay([message], 10000);
       }
     } catch (error) {
       const errorMessage = `Error processing message: ${error.message}`;
       logError(errorMessage, webhookUrlError);
       message.react('❌');
+      // Delete only the user's message after 10 seconds
+      deleteMessagesAfterDelay([message], 10000);
     }
   }
 });
 
 // Add a function to delete only the user's message after a specified delay
-async function deleteMessagesAfterDelay(messages, delay) {
+async function deleteMessagesAfterDelay(messages, delay, exceptionMessageId) {
   // Wait for the specified delay
   await setTimeout(delay);
 
   try {
-    // Delete only the user's message in the array
+    // Delete only the user's message in the array, except the exceptionMessageId
     for (const msg of messages) {
-      if (!msg.author.bot) {
-        // Delete only if the message is not from a bot (user's message)
+      if (!msg.author.bot && msg.id !== exceptionMessageId) {
+        // Delete only if the message is not from a bot (user's message) and not the exception
         await msg.delete();
       }
     }
   } catch (error) {
-    console.error(error);
+    logError(`Error deleting messages: ${error.message}`);
   }
-})();
+}
 
-mainBot.on('interactionCreate', async (interaction) => {
-  if (!interaction.isCommand()) return;
+function extractAllDomainsAndPorts(message) {
+  const matches = message.match(/\b([^\s]+?):(\d+)\b/g);
+  if (matches) {
+    return matches.map(match => {
+      const [_, domain, port] = match.match(/([^\s]+?):(\d+)/);
+      if (isValidDomain(domain)) {
+        return { domain, port };
+      }
+      return null;
+    }).filter(Boolean);
+  }
+  return [];
+}
 
-  const { commandName } = interaction;
+function isValidDomain(domain) {
+  return domain.includes('.');
+}
 
-  // Check if the user has the required role
-  const requiredRole = process.env.ROLE_ID;
-  if (!interaction.member.roles.cache.has(requiredRole)) {
-    return interaction.reply({
-      content: 'You do not have the required role to use this command.',
-      ephemeral: true,
+async function resolveIPs(domains) {
+  const promises = domains.map((domain) => resolveIP(domain));
+  const results = await Promise.all(promises);
+  return domains.reduce((acc, domain, index) => {
+    acc[domain] = results[index];
+    return acc;
+  }, {});
+}
+
+function resolveIP(domain) {
+  return new Promise((resolve, reject) => {
+    dns.resolve(domain, 'A', (error, addresses) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(addresses[0]);
+      }
     });
+  });
+}
+
+async function queryMinecraftServer(domain, port) {
+  return new Promise((resolve, reject) => {
+    mcPing(domain, port, (err, res) => {
+      if (err) {
+        logError(`Error querying Minecraft server for ${domain}:${port}: ${err.message}`, webhookUrlError);
+        reject(err);
+      } else {
+        resolve(res);
+      }
+    });
+  });
+}
+
+async function sendSummary(webhookUrl, summary) {
+  try {
+    await axios.post(webhookUrl, { content: summary });
+  } catch (error) {
+    logError(`Failed to send summary to webhook (${webhookUrl}): ${error.message}`, webhookUrlError);
   }
+}
+
+async function logError(errorMessage, webhookUrl) {
+  console.error(errorMessage);
 
   try {
-    // Execute the command dynamically based on the commandName
-    const command = require(`./commands/${commandName}`);
-    await command.execute(interaction);
+    // Send error log to Discord webhook
+    await axios.post(webhookUrl, { content: errorMessage });
   } catch (error) {
-    console.error(error);
-    return interaction.reply({ content: 'Error executing the command.', ephemeral: true });
+    console.error(`Failed to send error log to webhook (${webhookUrl}): ${error.message}`);
   }
-});
+}
 
-mainBot.login(process.env.BOT_TOKEN);
-
-// Additional channel monitoring setup
-const channelMonitor = require('./mc');
+client.login(process.env.BOT_TOKEN);
