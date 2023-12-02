@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const fs = require('fs');
-const dns = require('dns');
+const fetch = require('node-fetch');
 
 // Array of allowed IP addresses
 const allowedIPs = ['51.255.80.17', '46.250.234.25', '46.250.234.35', '2.223.144.35'];
@@ -18,35 +18,38 @@ module.exports = {
         const serverData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 
         // Resolve IP address
-        dns.resolve4(serverData.ip, (err, addresses) => {
-          if (err) {
-            console.error(`Error resolving IP address for user ${userId}: ${err}`);
-            interaction.reply('There was an error resolving the IP address. Try adding your server again with the addserver command!');
-            return;
-          }
+        const resolvedIP = await resolveIP(serverData.ip);
 
-          const resolvedIP = addresses[0];
+        // Check if the resolved IP matches any allowed IP
+        if (allowedIPs.includes(resolvedIP)) {
+          try {
+            // Fetch MOTD from the Minecraft server
+            const motd = await fetchMOTD(serverData.ip, serverData.port);
 
-          // Check if the resolved IP matches any allowed IP
-          if (allowedIPs.includes(resolvedIP)) {
             // Assuming CHANNEL_ID is defined in your .env file
             const channelId = process.env.CHANNEL_ID;
             const channel = interaction.client.channels.cache.get(channelId);
 
             if (channel) {
-              channel.send(`Server Information for User ${interaction.user.tag}:
+              const message = `Server Information for User ${interaction.user.tag}:
                 IP: ${serverData.ip}
                 Port: ${serverData.port}
-                Message: ${serverData.message}`);
+                Message: ${serverData.message}
+                MOTD: ${motd}`;
+
+              channel.send(message);
               interaction.reply('Server information showcased successfully!');
             } else {
               console.error(`Channel with ID ${channelId} not found.`);
               interaction.reply('There was an error showcasing server information.');
             }
-          } else {
-            interaction.reply('Invalid IP address. Please provide a valid IP address.');
+          } catch (error) {
+            console.error(`Error fetching MOTD for user ${userId}: ${error}`);
+            interaction.reply('There was an error fetching the MOTD from the Minecraft server.');
           }
-        });
+        } else {
+          interaction.reply('Invalid IP address. Please provide a valid IP address.');
+        }
       } else {
         interaction.reply('No server information found. Use /addserver to add server information.');
       }
@@ -56,3 +59,38 @@ module.exports = {
     }
   },
 };
+
+async function resolveIP(ip) {
+  return new Promise((resolve, reject) => {
+    require('dns').resolve4(ip, (err, addresses) => {
+      if (err) reject(err);
+      else resolve(addresses[0]);
+    });
+  });
+}
+
+async function fetchMOTD(ip, port) {
+  const apiUrl = `https://api.mcsrvstat.us/2/${ip}:${port}`;
+
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    if (data.online) {
+      let motd;
+      if (Array.isArray(data.motd)) {
+        motd = data.motd.join(' ');
+      } else if (typeof data.motd === 'object') {
+        motd = data.motd.clean.join(' ');
+      } else {
+        motd = data.motd;
+      }
+
+      return motd;
+    } else {
+      throw new Error('Server is offline or unreachable.');
+    }
+  } catch (error) {
+    throw new Error(`Error fetching MOTD: ${error.message}`);
+  }
+}

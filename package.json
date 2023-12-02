@@ -25,6 +25,7 @@
     "jimp": "^0.22.10",
     "mc-ping-updated": "^0.1.1",
     "minecraft-ping": "^1.0.0",
+    "minecraft-protocol": "^1.44.0",
     "minecraft-server-util": "^5.4.4",
     "winston": "^3.11.0"
   }
