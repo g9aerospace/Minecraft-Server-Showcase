@@ -5,3 +5,4 @@ combined.log
 sftp.json
 servers/
 bot.log
+whitelisted-ips.txt

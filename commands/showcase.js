@@ -3,8 +3,19 @@ const { MessageEmbed } = require('discord.js');
 const fs = require('fs');
 const fetch = require('node-fetch');
 
-// Array of allowed IP addresses
-const allowedIPs = ['51.255.80.17', '46.250.234.25', '46.250.234.35', '2.223.144.35'];
+// Function to read whitelisted IPs from a file
+function readWhitelistedIPs(filePath) {
+  try {
+    const ips = fs.readFileSync(filePath, 'utf-8').split('\n').map(ip => ip.trim());
+    return ips.filter(Boolean); // Remove empty lines
+  } catch (error) {
+    console.error(`Error reading whitelisted IPs file: ${error.message}`);
+    return [];
+  }
+}
+
+// Array of allowed IP addresses read from the file
+const allowedIPs = readWhitelistedIPs('./whitelisted-ips.txt');
 
 // Map to store the last execution time for each user
 const commandTimeouts = new Map();

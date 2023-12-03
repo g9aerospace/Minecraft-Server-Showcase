@@ -42,6 +42,8 @@ To install the bot, follow these steps:
 
     Replace YOUR_DISCORD_CHANNEL_ID, YOUR_DISCORD_WEBHOOK_URL_INVALID_INPUT, YOUR_DISCORD_WEBHOOK_URL_ERROR, and YOUR_DISCORD_BOT_TOKEN with your actual Discord channel ID, webhook URLs, and bot token.
 
+
+    Create a whitelisted-ips.txt and place the IP addresses used by the host in it. One IP per line.
 4. Run the bot:
 
     ```
