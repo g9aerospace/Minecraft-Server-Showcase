@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
+const { MessageEmbed } = require('discord.js');
 const fs = require('fs');
 const fetch = require('node-fetch');
 
@@ -9,11 +10,15 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('showcase')
     .setDescription('Showcase server information in a channel'),
+
   async execute(interaction) {
     const userId = interaction.user.id;
     const filePath = `./servers/${userId}.json`;
 
     try {
+      // Defer the initial reply before performing the operation
+      await interaction.deferReply();
+
       if (fs.existsSync(filePath)) {
         const serverData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 
@@ -23,39 +28,79 @@ module.exports = {
         // Check if the resolved IP matches any allowed IP
         if (allowedIPs.includes(resolvedIP)) {
           try {
-            // Fetch MOTD from the Minecraft server
-            const motd = await fetchMOTD(serverData.ip, serverData.port);
+            // Fetch detailed server information
+            const serverDetails = await fetchServerDetails(serverData.ip, serverData.port);
 
             // Assuming CHANNEL_ID is defined in your .env file
             const channelId = process.env.CHANNEL_ID;
             const channel = interaction.client.channels.cache.get(channelId);
 
             if (channel) {
-              const message = `Server Information for User ${interaction.user.tag}:
-                IP: ${serverData.ip}
-                Port: ${serverData.port}
-                Message: ${serverData.message}
-                MOTD: ${motd}`;
+              // Handle MOTD based on its type
+              let motd = '';
+              if (Array.isArray(serverDetails.motd)) {
+                motd = serverDetails.motd.join(' ');
+              } else if (typeof serverDetails.motd === 'object') {
+                motd = serverDetails.motd.clean ? serverDetails.motd.clean.join(' ') : 'N/A';
+              } else {
+                motd = serverDetails.motd || 'N/A';
+              }
 
-              channel.send(message);
-              interaction.reply('Server information showcased successfully!');
+              // Create a new MessageEmbed
+              const embed = new MessageEmbed()
+                .setColor('#00ff00') // Set the embed color to green
+                .setTitle(`Server Information for User ${interaction.user.tag}`)
+                .setFooter(interaction.user.username, interaction.user.displayAvatarURL()); // Set the embed footer to the user's username and avatar
+
+              // Set embed thumbnail to the Minecraft server's icon (if available)
+              if (serverDetails.icon) {
+                embed.setThumbnail(`https://api.mcsrvstat.us/icon/${serverData.ip}:${serverData.port}`);
+              }
+
+              // Add fields only if the values are non-empty strings
+              if (typeof serverData.ip === 'string' && serverData.ip.trim() !== '') {
+                embed.addField('IP', serverData.ip, false); // Set inline to false
+              }
+              if (typeof serverData.port === 'string' && serverData.port.trim() !== '') {
+                embed.addField('Port', serverData.port, false); // Set inline to false
+              }
+              if (typeof serverData.message === 'string' && serverData.message.trim() !== '') {
+                embed.addField('Message', serverData.message, false); // Set inline to false
+              }
+              if (motd.trim() !== '') {
+                embed.addField('MOTD', motd, false); // Set inline to false
+              }
+              if (`${serverDetails.players.online}/${serverDetails.players.max}`.trim() !== '') {
+                embed.addField('Players', `${serverDetails.players.online}/${serverDetails.players.max}`, false); // Set inline to false
+              }
+              if (typeof serverDetails.version === 'string' && serverDetails.version.trim() !== '') {
+                embed.addField('Version', serverDetails.version, false); // Set inline to false
+              }
+
+              // Send the embed as the follow-up message
+              await interaction.followUp({ embeds: [embed] });
             } else {
               console.error(`Channel with ID ${channelId} not found.`);
-              interaction.reply('There was an error showcasing server information.');
+              // Send an error follow-up message
+              await interaction.followUp('There was an error showcasing server information.');
             }
           } catch (error) {
-            console.error(`Error fetching MOTD for user ${userId}: ${error}`);
-            interaction.reply('There was an error fetching the MOTD from the Minecraft server.');
+            console.error(`Error fetching server details for user ${userId}: ${error}`);
+            // Send an error follow-up message
+            await interaction.followUp('There was an error fetching server details from the Minecraft server.');
           }
         } else {
-          interaction.reply('Invalid IP address. Please provide a valid IP address.');
+          // Send an error follow-up message
+          await interaction.followUp('Invalid IP address. Please provide a valid IP address.');
         }
       } else {
-        interaction.reply('No server information found. Use /addserver to add server information.');
+        // Send an error follow-up message
+        await interaction.followUp('No server information found. Use /addserver to add server information.');
       }
     } catch (error) {
       console.error(`Error showcasing server information for user ${userId}: ${error}`);
-      interaction.reply('There was an error while showcasing server information.');
+      // Send an error follow-up message
+      await interaction.followUp('There was an error while showcasing server information.');
     }
   },
 };
@@ -69,28 +114,33 @@ async function resolveIP(ip) {
   });
 }
 
-async function fetchMOTD(ip, port) {
+async function fetchServerDetails(ip, port) {
   const apiUrl = `https://api.mcsrvstat.us/2/${ip}:${port}`;
 
   try {
     const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch server details. Status: ${response.status}`);
+    }
+
     const data = await response.json();
 
     if (data.online) {
-      let motd;
-      if (Array.isArray(data.motd)) {
-        motd = data.motd.join(' ');
-      } else if (typeof data.motd === 'object') {
-        motd = data.motd.clean.join(' ');
-      } else {
-        motd = data.motd;
-      }
-
-      return motd;
+      return {
+        motd: Array.isArray(data.motd) ? data.motd.join(' ') : data.motd,
+        players: {
+          online: data.players.online,
+          max: data.players.max,
+        },
+        version: data.version,
+        icon: data.icon, // Add icon property to the returned object
+      };
     } else {
       throw new Error('Server is offline or unreachable.');
     }
   } catch (error) {
-    throw new Error(`Error fetching MOTD: ${error.message}`);
+    console.error(`Error fetching server details: ${error.message}`);
+    throw new Error('Failed to fetch server details.');
   }
 }
