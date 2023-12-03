@@ -54,21 +54,14 @@ module.exports = {
             const channel = interaction.client.channels.cache.get(channelId);
 
             if (channel) {
+              const serverAddress = `${serverData.ip}:${serverData.port}`;
               const embed = new MessageEmbed()
                 .setColor('#00ff00')
+                .setTitle(`${serverAddress}`)
                 .setFooter(interaction.user.username, interaction.user.displayAvatarURL())
                 .setThumbnail(`https://api.mcsrvstat.us/icon/${serverData.ip}:${serverData.port}`);
 
-              // Add fields for server information
-              if (typeof serverData.ip === 'string' && serverData.ip.trim() !== '' && typeof serverData.port === 'number') {
-                const serverAddress = `${serverData.ip}:${serverData.port}`;
-                embed.addField('Server Address', '```' + serverAddress + '```', false);
-              }
-
-              embed.addField('Message', serverData.message || 'N/A', false);
-              embed.addField('Players', `${serverDetails.players.online}/${serverDetails.players.max}`, false);
-              embed.addField('Version', serverDetails.version || 'N/A', false);
-
+              // Add description for MOTD
               let motd = '';
               if (Array.isArray(serverDetails.motd)) {
                 motd = serverDetails.motd.join('\n');
@@ -78,7 +71,10 @@ module.exports = {
                 motd = serverDetails.motd || 'N/A';
               }
 
-              embed.addField('MOTD', '```' + motd + '```', false);
+              embed.setDescription(`\`\`\`${motd}\`\`\``);
+              embed.addField('Message', serverData.message || 'N/A', false);
+              embed.addField('Players', `${serverDetails.players.online}/${serverDetails.players.max}`, false);
+              embed.addField('Version', serverDetails.version || 'N/A', false);
 
               // Send the embed to the specified channel
               const sentMessage = await channel.send({ embeds: [embed] });
