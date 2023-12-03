@@ -36,46 +36,37 @@ module.exports = {
             const channel = interaction.client.channels.cache.get(channelId);
 
             if (channel) {
+              // Create a new MessageEmbed with Minecraft-themed styling
+              const embed = new MessageEmbed()
+                .setColor('#00ff00') // Set the embed color to green
+                .setTitle(`Server Information for User ${interaction.user.tag}`)
+                .setFooter(interaction.user.username, interaction.user.displayAvatarURL()) // Set the embed footer to the user's username and avatar
+                .setThumbnail(`https://api.mcsrvstat.us/icon/${serverData.ip}:${serverData.port}`); // Set embed thumbnail to the Minecraft server's icon (if available)
+
+                // Add fields for server information
+              // Display "Server Address" field at the beginning
+              if (typeof serverData.ip === 'string' && serverData.ip.trim() !== '' && typeof serverData.port === 'number') {
+                const serverAddress = `${serverData.ip}:${serverData.port}`;
+                embed.addField('Server Address', '```' + serverAddress + '```', false); // Set inline to false and wrap Server Address in a code block
+              }
+
+              // Add other fields
+              embed.addField('Message', serverData.message || 'N/A', false);
+              embed.addField('Players', `${serverDetails.players.online}/${serverDetails.players.max}`, false);
+              embed.addField('Version', serverDetails.version || 'N/A', false);
+
               // Handle MOTD based on its type
               let motd = '';
               if (Array.isArray(serverDetails.motd)) {
-                motd = serverDetails.motd.join(' ');
+                motd = serverDetails.motd.join('\n'); // Join MOTD lines with line breaks
               } else if (typeof serverDetails.motd === 'object') {
-                motd = serverDetails.motd.clean ? serverDetails.motd.clean.join(' ') : 'N/A';
+                motd = serverDetails.motd.clean ? serverDetails.motd.clean.join('\n') : 'N/A';
               } else {
                 motd = serverDetails.motd || 'N/A';
               }
 
-              // Create a new MessageEmbed
-              const embed = new MessageEmbed()
-                .setColor('#00ff00') // Set the embed color to green
-                .setTitle(`Server Information for User ${interaction.user.tag}`)
-                .setFooter(interaction.user.username, interaction.user.displayAvatarURL()); // Set the embed footer to the user's username and avatar
-
-              // Set embed thumbnail to the Minecraft server's icon (if available)
-              if (serverDetails.icon) {
-                embed.setThumbnail(`https://api.mcsrvstat.us/icon/${serverData.ip}:${serverData.port}`);
-              }
-
-              // Add fields only if the values are non-empty strings
-              if (typeof serverData.ip === 'string' && serverData.ip.trim() !== '') {
-                embed.addField('IP', serverData.ip, false); // Set inline to false
-              }
-              if (typeof serverData.port === 'string' && serverData.port.trim() !== '') {
-                embed.addField('Port', serverData.port, false); // Set inline to false
-              }
-              if (typeof serverData.message === 'string' && serverData.message.trim() !== '') {
-                embed.addField('Message', serverData.message, false); // Set inline to false
-              }
-              if (motd.trim() !== '') {
-                embed.addField('MOTD', motd, false); // Set inline to false
-              }
-              if (`${serverDetails.players.online}/${serverDetails.players.max}`.trim() !== '') {
-                embed.addField('Players', `${serverDetails.players.online}/${serverDetails.players.max}`, false); // Set inline to false
-              }
-              if (typeof serverDetails.version === 'string' && serverDetails.version.trim() !== '') {
-                embed.addField('Version', serverDetails.version, false); // Set inline to false
-              }
+              // Add the Minecraft-themed MOTD to the embed description
+              embed.addField('MOTD', '```' + motd + '```', false); // Set inline to false
 
               // Send the embed as the follow-up message
               await interaction.followUp({ embeds: [embed] });
