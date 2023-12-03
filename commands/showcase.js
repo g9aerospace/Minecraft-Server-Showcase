@@ -6,6 +6,9 @@ const fetch = require('node-fetch');
 // Array of allowed IP addresses
 const allowedIPs = ['51.255.80.17', '46.250.234.25', '46.250.234.35', '2.223.144.35'];
 
+// Map to store the last execution time for each user
+const commandTimeouts = new Map();
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('showcase')
@@ -16,6 +19,14 @@ module.exports = {
     const filePath = `./servers/${userId}.json`;
 
     try {
+      // Check if the user is within the timeout period
+      const lastExecutionTime = commandTimeouts.get(userId);
+      if (lastExecutionTime && Date.now() - lastExecutionTime < 24 * 60 * 60 * 1000) {
+        const remainingTime = 24 * 60 * 60 * 1000 - (Date.now() - lastExecutionTime);
+        await interaction.reply(`You are still on timeout. Please wait ${Math.ceil(remainingTime / (60 * 60 * 1000))} hours before using this command again.`);
+        return;
+      }
+
       // Defer the initial reply before performing the operation
       await interaction.deferReply();
 
@@ -80,6 +91,10 @@ module.exports = {
       } else {
         await interaction.followUp('No server information found. Use /addserver to add server information.');
       }
+
+      // Save the current execution time for the user
+      commandTimeouts.set(userId, Date.now());
+
     } catch (error) {
       console.error(`Error showcasing server information for user ${userId}: ${error}`);
       await interaction.followUp('There was an error while showcasing server information.');
