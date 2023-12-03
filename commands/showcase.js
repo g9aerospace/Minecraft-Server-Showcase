@@ -21,14 +21,10 @@ module.exports = {
 
       if (fs.existsSync(filePath)) {
         const serverData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-
-        // Resolve IP address
         const resolvedIP = await resolveIP(serverData.ip);
 
-        // Check if the resolved IP matches any allowed IP
         if (allowedIPs.includes(resolvedIP)) {
           try {
-            // Fetch detailed server information
             const serverDetails = await fetchServerDetails(serverData.ip, serverData.port);
 
             // Assuming CHANNEL_ID is defined in your .env file
@@ -36,61 +32,56 @@ module.exports = {
             const channel = interaction.client.channels.cache.get(channelId);
 
             if (channel) {
-              // Create a new MessageEmbed with Minecraft-themed styling
               const embed = new MessageEmbed()
-                .setColor('#00ff00') // Set the embed color to green
-                .setTitle(`Server Information for User ${interaction.user.tag}`)
-                .setFooter(interaction.user.username, interaction.user.displayAvatarURL()) // Set the embed footer to the user's username and avatar
-                .setThumbnail(`https://api.mcsrvstat.us/icon/${serverData.ip}:${serverData.port}`); // Set embed thumbnail to the Minecraft server's icon (if available)
+                .setColor('#00ff00')
+                .setFooter(interaction.user.username, interaction.user.displayAvatarURL())
+                .setThumbnail(`https://api.mcsrvstat.us/icon/${serverData.ip}:${serverData.port}`);
 
-                // Add fields for server information
-              // Display "Server Address" field at the beginning
+              // Add fields for server information
               if (typeof serverData.ip === 'string' && serverData.ip.trim() !== '' && typeof serverData.port === 'number') {
                 const serverAddress = `${serverData.ip}:${serverData.port}`;
-                embed.addField('Server Address', '```' + serverAddress + '```', false); // Set inline to false and wrap Server Address in a code block
+                embed.addField('Server Address', '```' + serverAddress + '```', false);
               }
 
-              // Add other fields
               embed.addField('Message', serverData.message || 'N/A', false);
               embed.addField('Players', `${serverDetails.players.online}/${serverDetails.players.max}`, false);
               embed.addField('Version', serverDetails.version || 'N/A', false);
 
-              // Handle MOTD based on its type
               let motd = '';
               if (Array.isArray(serverDetails.motd)) {
-                motd = serverDetails.motd.join('\n'); // Join MOTD lines with line breaks
+                motd = serverDetails.motd.join('\n');
               } else if (typeof serverDetails.motd === 'object') {
                 motd = serverDetails.motd.clean ? serverDetails.motd.clean.join('\n') : 'N/A';
               } else {
                 motd = serverDetails.motd || 'N/A';
               }
 
-              // Add the Minecraft-themed MOTD to the embed description
-              embed.addField('MOTD', '```' + motd + '```', false); // Set inline to false
+              embed.addField('MOTD', '```' + motd + '```', false);
 
-              // Send the embed as the follow-up message
-              await interaction.followUp({ embeds: [embed] });
+              // Send the embed to the specified channel
+              const sentMessage = await channel.send({ embeds: [embed] });
+
+              // Get the link to the sent message
+              const embedLink = sentMessage.url;
+
+              // Reply to the user's message with a confirmation and link to the embed
+              await interaction.followUp(`Server information sent! [View Server Details](${embedLink})`);
             } else {
               console.error(`Channel with ID ${channelId} not found.`);
-              // Send an error follow-up message
               await interaction.followUp('There was an error showcasing server information.');
             }
           } catch (error) {
             console.error(`Error fetching server details for user ${userId}: ${error}`);
-            // Send an error follow-up message
             await interaction.followUp('There was an error fetching server details from the Minecraft server.');
           }
         } else {
-          // Send an error follow-up message
           await interaction.followUp('Invalid IP address. Please provide a valid IP address.');
         }
       } else {
-        // Send an error follow-up message
         await interaction.followUp('No server information found. Use /addserver to add server information.');
       }
     } catch (error) {
       console.error(`Error showcasing server information for user ${userId}: ${error}`);
-      // Send an error follow-up message
       await interaction.followUp('There was an error while showcasing server information.');
     }
   },
@@ -125,7 +116,7 @@ async function fetchServerDetails(ip, port) {
           max: data.players.max,
         },
         version: data.version,
-        icon: data.icon, // Add icon property to the returned object
+        icon: data.icon,
       };
     } else {
       throw new Error('Server is offline or unreachable.');
