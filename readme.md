@@ -34,16 +34,21 @@ To install the bot, follow these steps:
     Create a .env file and add the following:
 
     ```
-        CHANNEL_ID=YOUR_DISCORD_CHANNEL_ID
-        WEBHOOK_URL_INVALID_INPUT=YOUR_DISCORD_WEBHOOK_URL_INVALID_INPUT
-        WEBHOOK_URL_ERROR=YOUR_DISCORD_WEBHOOK_URL_ERROR
-        BOT_TOKEN=YOUR_DISCORD_BOT_TOKEN
+        BOT_TOKEN=
+        CHANNEL_ID=
+        WEBHOOK_URL=
+        GUILD_ID=
+        CHANNEL_ID=
+        IMAGE_URL=
+        PANEL_CHANNEL_ID=
+        CLIENT_ID=
     ```
 
-    Replace YOUR_DISCORD_CHANNEL_ID, YOUR_DISCORD_WEBHOOK_URL_INVALID_INPUT, YOUR_DISCORD_WEBHOOK_URL_ERROR, and YOUR_DISCORD_BOT_TOKEN with your actual Discord channel ID, webhook URLs, and bot token.
+Enter the appropriate values
 
 
     Create a whitelisted-ips.txt and place the IP addresses used by the host in it. One IP per line.
+
 4. Run the bot:
 
     ```
@@ -52,7 +57,14 @@ To install the bot, follow these steps:
 
 5. Usage
 
-    Send a message in the specified channel and provide valid domain:port combinations to showcase Minecraft servers.
+        /addserver
+        Add server information
+        /help
+        Get information about available commands
+        /showcase
+        Showcase server information in a channel
+        /userinfo
+        Fetch server information of another user
 
 6. Support and Feedback
 
