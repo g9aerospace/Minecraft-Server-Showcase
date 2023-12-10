@@ -13,10 +13,12 @@ module.exports = {
   async execute(interaction) {
     try {
       // Defer the initial reply before performing the operation
-      await interaction.deferReply();
+      await interaction.deferReply({ ephemeral: true }); // Set ephemeral to true
 
       // Get the selected user ID
-      const targetUserId = interaction.options.getUser('target').id;
+      const targetUser = interaction.options.getUser('target');
+      const targetUserId = targetUser.id;
+      const targetUsername = targetUser.username;
 
       // Check if the user has server information
       const filePath = `./servers/${targetUserId}.json`;
@@ -25,19 +27,20 @@ module.exports = {
         // Read server information from the file
         const serverData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 
-        // Construct the server information as a text message
-        const serverInfoText = `**Server Information**\n\n` +
+        // Construct the server information as a hidden text message
+        const serverInfoText = `**Server Information for ${targetUsername}**\n\n` +
           `> **Server IP:** ${serverData.ip || 'Not provided'}\n` +
           `> **Server Port:** ${serverData.port || 'Not provided'}\n` +
           `> **Message:** ${serverData.message || 'Not provided'}`;
 
-        await interaction.followUp(serverInfoText);
+        // Send the hidden text message
+        await interaction.followUp({ content: serverInfoText, ephemeral: true });
       } else {
-        await interaction.followUp('No server information found for the selected user.');
+        await interaction.followUp({ content: `No server information found for ${targetUsername}.`, ephemeral: true });
       }
     } catch (error) {
       console.error(`Error in userinfo command: ${error}`);
-      await interaction.followUp('There was an error while processing the command.');
+      await interaction.followUp({ content: 'There was an error while processing the command.', ephemeral: true });
     }
   },
 };

@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
+const { MessageEmbed } = require('discord.js');
 const fs = require('fs');
 
 module.exports = {
@@ -34,7 +35,15 @@ module.exports = {
       const filePath = `${serversFolder}/${userId}.json`;
       fs.writeFileSync(filePath, JSON.stringify(serverData, null, 2));
 
-      await interaction.reply('Server information added successfully!');
+      // Create a MessageEmbed with blue color
+      const embed = new MessageEmbed()
+        .setTitle('Server Information')
+        .setDescription('Server information added successfully!')
+        .setFooter('Embernodes', 'attachment://embernodes.png')
+        .setColor('BLUE'); // Set color to blue
+
+      // Send the embed along with the image
+      await interaction.reply({ embeds: [embed], files: ['./embernodes.png'] });
     } catch (error) {
       console.error(`Error adding server information for user ${userId}: ${error}`);
       await interaction.reply('There was an error while adding server information.');

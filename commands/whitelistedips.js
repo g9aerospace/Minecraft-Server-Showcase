@@ -17,10 +17,11 @@ module.exports = {
       .setColor('#3498db') // Blue color
       .setTitle('Whitelisted IPs')
       .setDescription('List of whitelisted IPs:')
-      .addField('IPs:', `\`\`\`\n${whitelistedIPs.join('\n')}\`\`\``);
+      .addField('IPs:', `\`\`\`\n${whitelistedIPs.join('\n')}\`\`\``)
+      .setFooter('Embernodes', 'attachment://embernodes.png'); // Set footer with image attachment
 
     // Reply with the embed
-    interaction.reply({ embeds: [embed] });
+    interaction.reply({ embeds: [embed], files: ['./embernodes.png'] });
   },
 };
 
