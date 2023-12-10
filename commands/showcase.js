@@ -1,7 +1,10 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { MessageEmbed } = require('discord.js');
+const { MessageEmbed, WebhookClient } = require('discord.js');
 const fs = require('fs');
 const fetch = require('node-fetch');
+
+// Load environment variables
+require('dotenv').config();
 
 // Function to read whitelisted IPs from a file
 function readWhitelistedIPs(filePath) {
@@ -9,7 +12,7 @@ function readWhitelistedIPs(filePath) {
     const ips = fs.readFileSync(filePath, 'utf-8').split('\n').map(ip => ip.trim());
     return ips.filter(Boolean); // Remove empty lines
   } catch (error) {
-    console.error(`Error reading whitelisted IPs file: ${error.message}`);
+    logError('Error reading whitelisted IPs file', error);
     return [];
   }
 }
@@ -40,6 +43,9 @@ module.exports = {
 
       // Defer the initial reply before performing the operation
       await interaction.deferReply();
+
+      // Log user interaction
+      logInfo(`User ${userId} invoked the showcase command.`);
 
       if (fs.existsSync(filePath)) {
         const serverData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
@@ -76,6 +82,9 @@ module.exports = {
               embed.addField('Players', `${serverDetails.players.online}/${serverDetails.players.max}`, false);
               embed.addField('Version', serverDetails.version || 'N/A', false);
 
+              // Add a new field for Server Software
+              embed.addField('Server Software', serverDetails.software || 'N/A', false);
+
               // Send the embed to the specified channel
               const sentMessage = await channel.send({ embeds: [embed] });
 
@@ -87,24 +96,37 @@ module.exports = {
 
               // Save the current execution time for the user
               commandTimeouts.set(userId, Date.now());
+
+              // Log server information
+              logInfo(`Server information sent by ${interaction.user.username} for ${serverAddress}`);
+
+              // Log to webhook
+              logToWebhook(embed, interaction.user.username, serverAddress);
             } else {
-              console.error(`Channel with ID ${channelId} not found.`);
+              logError(`Channel with ID ${channelId} not found.`);
               await interaction.followUp('There was an error showcasing server information.');
             }
           } catch (error) {
-            console.error(`Error fetching server details for user ${userId}: ${error}`);
+            logError(`Error fetching server details for user ${userId}`, error);
             await interaction.followUp('There was an error fetching server details from the Minecraft server.');
+
+            // Log error to webhook
+            logErrorToWebhook(error, interaction.user.username);
           }
         } else {
           await interaction.followUp('Invalid IP address. Please provide a valid IP address.');
         }
       } else {
+        logInfo(`No server information found for user ${userId}.`);
         await interaction.followUp('No server information found. Use /addserver to add server information.');
       }
 
     } catch (error) {
-      console.error(`Error showcasing server information for user ${userId}: ${error}`);
+      logError(`Error showcasing server information for user ${userId}`, error);
       await interaction.followUp('There was an error while showcasing server information.');
+
+      // Log error to webhook
+      logErrorToWebhook(error, interaction.user.username);
     }
   },
 };
@@ -139,6 +161,7 @@ async function fetchServerDetails(ip, port) {
         },
         version: data.version,
         icon: data.icon,
+        software: data.software || 'N/A', // Added software field
       };
     } else {
       throw new Error('Server is offline or unreachable.');
@@ -146,5 +169,43 @@ async function fetchServerDetails(ip, port) {
   } catch (error) {
     console.error(`Error fetching server details: ${error.message}`);
     throw new Error('Failed to fetch server details.');
+  }
+}
+
+function logInfo(message) {
+  console.log(`[INFO] ${new Date().toISOString()} - ${message}`);
+}
+
+function logError(message, error) {
+  console.error(`[ERROR] ${new Date().toISOString()} - ${message}`);
+  console.error(error);
+}
+
+function logToWebhook(embed, username, serverAddress) {
+  const webhookUrl = process.env.SHOWCASE_WEBHOOK_URL;
+
+  if (webhookUrl) {
+    const webhookClient = new WebhookClient({ url: webhookUrl });
+    webhookClient.send({
+      embeds: [embed],
+      username: 'Showcase Logger',
+      content: `Server information logged by ${username} for ${serverAddress}`,
+    });
+  } else {
+    logError('SHOWCASE_WEBHOOK_URL not defined in the .env file. Unable to log to webhook.');
+  }
+}
+
+function logErrorToWebhook(error, username) {
+  const webhookUrl = process.env.SHOWCASE_WEBHOOK_URL;
+
+  if (webhookUrl) {
+    const webhookClient = new WebhookClient({ url: webhookUrl });
+    webhookClient.send({
+      content: `Error logged by ${username}: \`\`\`${error.message}\`\`\``,
+      username: 'Showcase Error Logger',
+    });
+  } else {
+    logError('SHOWCASE_WEBHOOK_URL not defined in the .env file. Unable to log error to webhook.');
   }
 }
