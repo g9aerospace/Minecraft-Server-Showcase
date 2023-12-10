@@ -35,10 +35,11 @@ To install the bot, follow these steps:
 
     ```
         BOT_TOKEN=
-        CHANNEL_ID=
-        WEBHOOK_URL=
         GUILD_ID=
         CLIENT_ID=
+        CHANNEL_ID=
+        WEBHOOK_URL=
+        SHOWCASE_WEBHOOK_URL
     ```
 
 Enter the appropriate values
