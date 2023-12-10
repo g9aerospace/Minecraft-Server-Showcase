@@ -38,9 +38,6 @@ To install the bot, follow these steps:
         CHANNEL_ID=
         WEBHOOK_URL=
         GUILD_ID=
-        CHANNEL_ID=
-        IMAGE_URL=
-        PANEL_CHANNEL_ID=
         CLIENT_ID=
     ```
 
