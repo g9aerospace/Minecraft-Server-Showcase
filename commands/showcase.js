@@ -84,6 +84,9 @@ module.exports = {
 
               // Reply to the user's message with a confirmation and link to the embed
               await interaction.followUp(`Server information sent! [View Server Details](${embedLink})`);
+
+              // Save the current execution time for the user
+              commandTimeouts.set(userId, Date.now());
             } else {
               console.error(`Channel with ID ${channelId} not found.`);
               await interaction.followUp('There was an error showcasing server information.');
@@ -98,9 +101,6 @@ module.exports = {
       } else {
         await interaction.followUp('No server information found. Use /addserver to add server information.');
       }
-
-      // Save the current execution time for the user
-      commandTimeouts.set(userId, Date.now());
 
     } catch (error) {
       console.error(`Error showcasing server information for user ${userId}: ${error}`);
