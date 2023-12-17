@@ -7,12 +7,8 @@ module.exports = {
     .setName('addserver')
     .setDescription('Add server information')
     .addStringOption(option =>
-      option.setName('ip')
-        .setDescription('Server IP')
-        .setRequired(true))
-    .addIntegerOption(option =>
-      option.setName('port')
-        .setDescription('Server Port')
+      option.setName('address')
+        .setDescription('Server Address (IP:Port or Domain)')
         .setRequired(true))
     .addStringOption(option =>
       option.setName('message')
@@ -20,9 +16,27 @@ module.exports = {
         .setRequired(true)),
   async execute(interaction) {
     const userId = interaction.user.id;
+    let address = interaction.options.getString('address');
+    
+    // Check if the address contains a port, if not, check if it looks like a SRV record
+    if (!address.includes(':')) {
+      const isSRVRecord = address.startsWith('_') && address.includes('.');
+      
+      if (!isSRVRecord) {
+        // Notify the user that they provided an address without a port and suggest it might be a SRV record
+        await interaction.reply({
+          content: 'You provided a server address without specifying a port. This may function improperly if it\'s not a SRV record. If it is a SRV record, you can ignore this message.',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      // If it's a SRV record, append a default port (e.g., 80)
+      address += ':80';
+    }
+
     const serverData = {
-      ip: interaction.options.getString('ip'),
-      port: interaction.options.getInteger('port'),
+      address,
       message: interaction.options.getString('message'),
     };
 
