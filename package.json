@@ -27,6 +27,7 @@
     "minecraft-ping": "^1.0.0",
     "minecraft-protocol": "^1.44.0",
     "minecraft-server-util": "^5.4.4",
+    "puppeteer": "^21.6.1",
     "winston": "^3.11.0"
   }
 }
