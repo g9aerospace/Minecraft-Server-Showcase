@@ -44,9 +44,6 @@ To install the bot, follow these steps:
     You can have as many manager roles as you want, separate their role ids with commas
 Enter the appropriate values
 
-
-    Create a whitelisted-ips.txt and place the IP addresses used by the host in it. One IP per line.
-
 4. Run the bot:
 
     ```
@@ -55,14 +52,20 @@ Enter the appropriate values
 
 5. Usage
 
-        /addserver
-        Add server information
-        /help
-        Get information about available commands
-        /showcase
-        Showcase server information in a channel
-        /userinfo
-        Fetch server information of another user
+    /addserver
+    Add or update server information
+    /help
+    Get information about available commands
+    /info
+    Get information about the bot and its author
+    /removecooldown
+    Remove cooldown for a user
+    /showcase
+    Showcase Minecraft server information
+    /userinfo
+    Fetch server information
+    /whitelistedips
+    Show whitelisted IPs
 
 6. Support and Feedback
 
