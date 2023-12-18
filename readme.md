@@ -40,8 +40,9 @@ To install the bot, follow these steps:
         CHANNEL_ID=
         WEBHOOK_URL=
         SHOWCASE_WEBHOOK_URL
+        MANAGER_ROLE_IDS=
     ```
-
+    You can have as many manager roles as you want, separate their role ids with commas
 Enter the appropriate values
 
 
