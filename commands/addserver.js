@@ -92,7 +92,7 @@ function log(message, logLevel = 'info') {
   const logMessage = `[${timestamp}] [${formattedLogLevel.toUpperCase()}] ${message}`;
 
   // Append the log to the bot.log file
-  fs.appendFileSync('/bot.log', logMessage + '\n', 'utf8');
+  fs.appendFileSync('./bot.log', logMessage + '\n', 'utf8');
 
   // Log to console
   if (formattedLogLevel.toLowerCase() === 'error') {
