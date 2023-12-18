@@ -2,10 +2,14 @@ const { Client, Intents, WebhookClient } = require('discord.js');
 const { config } = require('dotenv');
 const fs = require('fs');
 
+// Load environment variables from a .env file
 config();
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
+// Declare constants
 const { BOT_TOKEN, GUILD_ID, WEBHOOK_URL } = process.env;
+
+// Create an instance of the Discord client with necessary intents
+const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
 // Ensure the bot.log file exists
 fs.writeFileSync('bot.log', '', 'utf8');
@@ -13,15 +17,18 @@ fs.writeFileSync('bot.log', '', 'utf8');
 client.once('ready', () => {
   log('Bot is ready.');
   registerSlashCommands();
-
-  // Set up periodic log sending
-  setInterval(sendLogToWebhook, 600000); // 10 minutes interval (in milliseconds)
 });
 
 client.on('interactionCreate', async (interaction) => {
   // Log every interaction
   log(`Interaction received: ${interaction.type} | ID: ${interaction.id} | User: ${interaction.user.tag}`);
 
+  // Log additional details for each interaction
+  log(`Guild: ${interaction.guild ? interaction.guild.name : 'DM'}`);
+  log(`Channel: ${interaction.channel.name} (${interaction.channel.type})`);
+  log(`Command: ${interaction.commandName}`);
+  log(`Options: ${JSON.stringify(interaction.options)}`);
+  
   if (!interaction.isCommand()) return;
 
   const { commandName } = interaction;
@@ -91,6 +98,11 @@ function log(message, logLevel = 'info') {
   }
 
   // Log to webhook
+  sendLogToWebhook(logMessage);
+}
+
+// Function to send log message to the webhook
+function sendLogToWebhook(logMessage) {
   try {
     const webhookClient = new WebhookClient({ url: WEBHOOK_URL });
     webhookClient.send({
@@ -98,23 +110,5 @@ function log(message, logLevel = 'info') {
     });
   } catch (webhookError) {
     console.error(`Error sending log to webhook: ${webhookError}`);
-  }
-}
-
-// Function to send log file to a webhook
-function sendLogToWebhook() {
-  try {
-    const timestamp = new Date().toISOString();
-    const fileContent = fs.readFileSync('bot.log', 'utf8');
-
-    const webhookClient = new WebhookClient({ url: WEBHOOK_URL });
-    webhookClient.send({
-      content: `Bot Log - ${timestamp}`,
-      files: [{ attachment: Buffer.from(fileContent), name: 'bot.log' }],
-    });
-
-    log('Log file sent to webhook successfully.');
-  } catch (error) {
-    log(`Error sending log file to webhook: ${error}`, 'error');
   }
 }
