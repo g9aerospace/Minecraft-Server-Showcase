@@ -26,7 +26,7 @@ module.exports = {
             value: command.description,
           }))
         )
-        .setFooter('Embernodes', 'attachment://embernodes.png'); // Set footer with image attachment
+        .setFooter('Embernodes', 'attachment://embernodes.png');
 
       // Reply with the embed
       interaction.reply({ embeds: [embed], files: ['./embernodes.png'] });
@@ -59,7 +59,6 @@ function log(message, logLevel = 'info') {
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] [${logLevel.toUpperCase()}] ${message}`;
 
-  // Specify the path where you want to store the bot.log file
   const logFilePath = './bot.log';
 
   // Append the log to the specified log file

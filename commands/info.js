@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { MessageEmbed } = require('discord.js');
+const { MessageEmbed, MessageAttachment } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,15 +14,16 @@ module.exports = {
     const embed = new MessageEmbed()
       .setTitle('Embernodes Showcase')
       .setColor(0x3498db)
-      .addField('About', 'Embernodes Showcase aims to help users showcase their Embernodes server with ease.')
+      .addField('About', 'Embernodes Showcase aims to help users showcase their Embernodes server with ease. Version: 1.0.0')
       .addField('Author', 'G9 Aerospace is a fellow YouTuber, Gamer, Coder')
       .addField('Uptime', uptimeString)
-      .setFooter('Bot Information')
-      .setTimestamp();
+      .setFooter('Embernodes', 'attachment://embernodes.png');
 
-    // Create action row with buttons directly within the reply method
+    const imageAttachment = new MessageAttachment('./embernodes.png');
+
     interaction.reply({
       embeds: [embed],
+      files: [imageAttachment],
       components: [
         {
           type: 'ACTION_ROW',
