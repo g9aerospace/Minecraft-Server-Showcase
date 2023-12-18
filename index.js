@@ -19,18 +19,31 @@ client.once('ready', () => {
 });
 
 client.on('interactionCreate', async (interaction) => {
+  // Log every interaction
+  log(`Interaction received: ${interaction.type} | ID: ${interaction.id} | User: ${interaction.user.tag}`);
+
   if (!interaction.isCommand()) return;
 
   const { commandName } = interaction;
 
-  log(`Command received: ${commandName} from ${interaction.user.tag}`);
+  // Log slash command usage
+  log(`Slash Command received: ${commandName} from ${interaction.user.tag}`);
 
   if (!client.commands.has(commandName)) return;
 
   try {
+    const startTimestamp = new Date();
+
     await client.commands.get(commandName).execute(interaction);
+
+    const endTimestamp = new Date();
+    const timeTaken = endTimestamp - startTimestamp;
+
+    // Log bot's response with timestamp and time taken
+    log(`Bot response for ${commandName} sent in ${timeTaken}ms`);
   } catch (error) {
-    log(`Error executing command ${commandName}: ${error}`);
+    // Log errors in detail
+    log(`Error executing command ${commandName}: ${error.stack}`, 'error');
     interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
   }
 });
@@ -59,17 +72,33 @@ function registerSlashCommands() {
 
   guild.commands.set(commands)
     .then(() => log('Slash commands registered successfully!'))
-    .catch(error => log(`Error registering slash commands: ${error}`));
+    .catch(error => log(`Error registering slash commands: ${error}`, 'error'));
 }
 
-// Function to log messages with timestamp and write to file
-function log(message) {
+// Function to log messages with timestamp and write to file, console, and webhook
+function log(message, logLevel = 'info') {
   const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] ${message}`;
-  console.log(logMessage);
+  const logMessage = `[${timestamp}] [${logLevel.toUpperCase()}] ${message}`;
 
   // Append the log to the bot.log file
   fs.appendFileSync('bot.log', logMessage + '\n', 'utf8');
+
+  // Log to console
+  if (logLevel === 'error') {
+    console.error(logMessage);
+  } else {
+    console.log(logMessage);
+  }
+
+  // Log to webhook
+  try {
+    const webhookClient = new WebhookClient({ url: WEBHOOK_URL });
+    webhookClient.send({
+      content: logMessage,
+    });
+  } catch (webhookError) {
+    console.error(`Error sending log to webhook: ${webhookError}`);
+  }
 }
 
 // Function to send log file to a webhook
@@ -86,6 +115,6 @@ function sendLogToWebhook() {
 
     log('Log file sent to webhook successfully.');
   } catch (error) {
-    log(`Error sending log file to webhook: ${error}`);
+    log(`Error sending log file to webhook: ${error}`, 'error');
   }
 }

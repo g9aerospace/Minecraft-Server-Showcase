@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { MessageEmbed } = require('discord.js');
+const { MessageEmbed, WebhookClient } = require('discord.js');
 const fs = require('fs');
 
 module.exports = {
@@ -28,6 +28,10 @@ module.exports = {
       const serversFolder = './servers';
       const filePath = `${serversFolder}/${userId}.json`;
 
+      // Log everything to bot.log, console, and webhook
+      log(`Processing server information for user ${userId}.`, 'info');
+      log('Server Data:', serverData, 'info');
+
       // Check if the file already exists
       if (fs.existsSync(filePath)) {
         // If the interaction has already been replied to, do nothing
@@ -35,6 +39,9 @@ module.exports = {
 
         // If the file exists, read the existing data
         const existingData = JSON.parse(fs.readFileSync(filePath));
+
+        // Log existing data
+        log('Existing Server Data:', existingData, 'info');
 
         // Update the existing data with the new serverData
         Object.assign(existingData, serverData);
@@ -47,6 +54,9 @@ module.exports = {
           content: 'Server information updated successfully!',
           ephemeral: true,
         });
+
+        // Log information to console
+        log('Server information updated successfully!', 'info');
       } else {
         // If the interaction has already been replied to, do nothing
         if (interaction.replied || interaction.deferred) return;
@@ -59,15 +69,46 @@ module.exports = {
           content: 'Server information added successfully!',
           ephemeral: true,
         });
+
+        // Log information to console
+        log('Server information added successfully!', 'info');
       }
 
-      // Log information to console
-      console.log(`Server information processed for user ${userId}.`);
-      console.log('Server Data:', serverData);
-
     } catch (error) {
-      console.error(`Error processing server information for user ${interaction.user.id}:`, error);
+      // Log errors in detail
+      log(`Error processing server information for user ${interaction.user.id}: ${error.stack}`, 'error');
       await interaction.reply('There was an error while processing server information.');
+
+      // Log detailed error to console
+      console.error('Detailed Error:', error);
     }
   },
 };
+
+// Function to log messages with timestamp and write to file, console, and webhook
+function log(message, logLevel = 'info') {
+  const timestamp = new Date().toISOString();
+  const formattedLogLevel = typeof logLevel === 'string' ? logLevel : 'info';
+  const logMessage = `[${timestamp}] [${formattedLogLevel.toUpperCase()}] ${message}`;
+
+  // Append the log to the bot.log file
+  fs.appendFileSync('bot.log', logMessage + '\n', 'utf8');
+
+  // Log to console
+  if (formattedLogLevel.toLowerCase() === 'error') {
+    console.error(logMessage);
+  } else {
+    console.log(logMessage);
+  }
+
+  // Log to webhook
+  try {
+    const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_URL });
+    webhookClient.send({
+      content: logMessage,
+    });
+  } catch (webhookError) {
+    // Log webhook error to console
+    console.error(`Error sending log to webhook: ${webhookError}`);
+  }
+}

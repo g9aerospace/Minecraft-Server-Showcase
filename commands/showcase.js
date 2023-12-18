@@ -14,6 +14,8 @@ module.exports = {
     const filePath = `./servers/${userId}.json`;
 
     try {
+      console.log('Interaction received:', interaction);
+
       if (!fs.existsSync(filePath)) {
         await interaction.reply('You have not added any server information. Use the `/addserver` command to add server details.');
         return;
@@ -31,9 +33,7 @@ module.exports = {
         return;
       }
 
-      const { players, version, icon, motd, software } = response.data;
-      const motdText = motd.clean.length > 0 ? motd.clean[0] : 'No MOTD available';
-      console.log('MOTD Queried:', motdText);
+      console.log('Minecraft Server Response:', response.data);
 
       // Check if the Minecraft server is online
       if (response.data.online) {
@@ -50,6 +50,7 @@ module.exports = {
       const user = interaction.user;
 
       // Generate Minecraft-style MOTD image with dirt background
+      const motdText = response.data.motd.clean.length > 0 ? response.data.motd.clean[0] : 'No MOTD available';
       const motdImageUrl = `https://via.placeholder.com/400x20/0099FF/FFFFFF?text=${encodeURIComponent(motdText)}&bg=https://via.placeholder.com/400x20/8B4513/8B4513`;
 
       const embed = new MessageEmbed()
@@ -57,22 +58,25 @@ module.exports = {
         .setColor('#0099FF')
         .addFields(
           { name: 'Server IP', value: address, inline: true },
-          { name: 'Players Online', value: `${players.online}/${players.max}`, inline: true },
-          { name: 'Version', value: version, inline: true },
+          { name: 'Players Online', value: `${response.data.players.online}/${response.data.players.max}`, inline: true },
+          { name: 'Version', value: response.data.version, inline: true },
           { name: 'User Message', value: userMessage || 'No custom message provided' },
-          { name: 'Software', value: software || 'Unknown', inline: true }
+          { name: 'Software', value: response.data.software || 'Unknown', inline: true }
         )
         .setImage(motdImageUrl)
-        .setThumbnail(icon ? `https://api.mcsrvstat.us/icon/${address}` : 'https://via.placeholder.com/64')
+        .setThumbnail(response.data.icon ? `https://api.mcsrvstat.us/icon/${address}` : 'https://via.placeholder.com/64')
         .setFooter(user.username, user.displayAvatarURL({ dynamic: true }));
 
       const targetChannelId = process.env.CHANNEL_ID;
       const targetChannel = await interaction.client.channels.fetch(targetChannelId);
       const sentMessage = await targetChannel.send({ embeds: [embed] });
 
+      console.log('Message sent successfully:', sentMessage);
+
       await interaction.reply(`Server information sent to <#${targetChannelId}>. [View Message](${sentMessage.url})`);
+      console.log('Interaction reply successful');
     } catch (error) {
-      console.error(`Error showcasing server for user ${userId}: ${error}`);
+      console.error(`Error showcasing server for user ${userId}:`, error);
       await interaction.reply('There was an error showcasing the server information.');
     }
   },
