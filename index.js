@@ -101,14 +101,46 @@ function log(message, logLevel = 'info') {
   sendLogToWebhook(logMessage);
 }
 
-// Function to send log message to the webhook
-function sendLogToWebhook(logMessage) {
+// Function to send log message to the webhook as embed
+async function sendLogToWebhook(logMessage) {
   try {
     const webhookClient = new WebhookClient({ url: WEBHOOK_URL });
-    webhookClient.send({
-      content: logMessage,
-    });
+
+    // Split log message into lines
+    const logLines = logMessage.split('\n');
+
+    // Create an embed for each line of log
+    for (const line of logLines) {
+      const embed = {
+        title: 'Log Message',
+        description: line,
+        color: getColorForLogLevel(line),
+        timestamp: new Date(),
+        footer: {
+          text: 'Bot Log',
+        },
+      };
+
+      await webhookClient.send({ embeds: [embed] });
+    }
   } catch (webhookError) {
     console.error(`Error sending log to webhook: ${webhookError}`);
   }
+}
+
+// Function to determine color for embed based on log level
+function getColorForLogLevel(logLine) {
+  const logLevel = logLine.match(/\[([^\]]+)\]/);
+  if (logLevel) {
+    switch (logLevel[1].toUpperCase()) {
+      case 'ERROR':
+        return 0xFF0000; // Red
+      case 'INFO':
+        return 0x00FF00; // Green
+      // Add more cases for other log levels if needed
+      default:
+        return 0xFFFFFF; // White (default)
+    }
+  }
+  return 0xFFFFFF; // White (default)
 }
