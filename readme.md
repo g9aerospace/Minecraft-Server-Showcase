@@ -2,7 +2,6 @@
 
 [![GitHub issues](https://img.shields.io/github/issues/g9militantsYT/Minecraft-Server-Showcase)](https://github.com/g9militantsYT/Minecraft-Server-Showcase/issues)
 [![GitHub stars](https://img.shields.io/github/stars/g9militantsYT/Minecraft-Server-Showcase)](https://github.com/g9militantsYT/Minecraft-Server-Showcase/stargazers)
-[![GitHub license](https://img.shields.io/github/license/g9militantsYT/Minecraft-Server-Showcase)](https://github.com/g9militantsYT/Minecraft-Server-Showcase/blob/Embernodes/LICENSE)
 
 The Minecraft Server Showcase Bot is a Discord bot that allows users to showcase Minecraft servers and retrieve information about them.
 
@@ -38,9 +37,9 @@ To install the bot, follow these steps:
         GUILD_ID=
         CLIENT_ID=
         CHANNEL_ID=
-        WEBHOOK_URL=
-        SHOWCASE_WEBHOOK_URL
         MANAGER_ROLE_IDS=
+        WEBHOOK_URL=
+        SHOWCASE_WEBHOOK_URL=
     ```
     You can have as many manager roles as you want, separate their role ids with commas
 Enter the appropriate values
