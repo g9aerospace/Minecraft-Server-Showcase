@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { WebhookClient } = require('discord.js');
+const { WebhookClient, MessageEmbed } = require('discord.js');
 const fs = require('fs');
 
 module.exports = {
@@ -77,14 +77,32 @@ function log(message, logLevel = 'info') {
     console.log(logMessage);
   }
 
-  // Log to webhook
+  // Log to webhook with embeds
   try {
     // Assuming you have a webhook URL stored in the process.env.WEBHOOK_URL
     const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_URL });
-    webhookClient.send({
-      content: logMessage,
-    });
+
+    const embed = new MessageEmbed()
+      .setColor(getLogLevelColor(logLevel))
+      .setTitle(`${logLevel.toUpperCase()} Log`)
+      .setDescription(`\`\`\`plaintext\n${logMessage}\n\`\`\``);
+
+    webhookClient.send({ embeds: [embed] });
   } catch (webhookError) {
     console.error(`Error sending log to webhook: ${webhookError}`);
+  }
+}
+
+// Helper function to get color based on log level
+function getLogLevelColor(logLevel) {
+  switch (logLevel) {
+    case 'error':
+      return '#FF0000'; // Red
+    case 'warn':
+      return '#FFA500'; // Orange
+    case 'info':
+      return '#00BFFF'; // Blue
+    default:
+      return '#808080'; // Gray for unknown log levels
   }
 }
