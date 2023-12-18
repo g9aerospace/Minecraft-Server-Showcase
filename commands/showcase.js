@@ -9,12 +9,28 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('showcase')
     .setDescription('Showcase Minecraft server information'),
+
   async execute(interaction) {
     const userId = interaction.user.id;
     const filePath = `./servers/${userId}.json`;
 
     try {
       console.log('Interaction received:', interaction);
+
+      // Check cooldown
+      const lastExecutionTime = getUserLastExecutionTime(userId);
+      const cooldownDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+      const timeSinceLastExecution = Date.now() - lastExecutionTime;
+
+      if (timeSinceLastExecution < cooldownDuration) {
+        const remainingCooldown = cooldownDuration - timeSinceLastExecution;
+        const remainingCooldownHours = Math.ceil(remainingCooldown / (60 * 60 * 1000));
+        
+        await interaction.reply(`Command is on cooldown. Please wait ${remainingCooldownHours} hours before using it again.`);
+        return;
+      }
+
+      // Continue with the command logic
 
       if (!fs.existsSync(filePath)) {
         await interaction.reply('You have not added any server information. Use the `/addserver` command to add server details.');
@@ -73,6 +89,9 @@ module.exports = {
 
       console.log('Message sent successfully:', sentMessage);
 
+      // Update the user's last execution time
+      updateUserLastExecutionTime(userId);
+
       await interaction.reply(`Server information sent to <#${targetChannelId}>. [View Message](${sentMessage.url})`);
       console.log('Interaction reply successful');
     } catch (error) {
@@ -81,3 +100,26 @@ module.exports = {
     }
   },
 };
+
+// Helper functions
+function getUserLastExecutionTime(userId) {
+  const filePath = `./servers/${userId}.json`;
+
+  if (fs.existsSync(filePath)) {
+    const userData = fs.readFileSync(filePath, 'utf8');
+    const { lastExecutionTime } = JSON.parse(userData);
+    return lastExecutionTime || 0;
+  }
+
+  return 0;
+}
+
+function updateUserLastExecutionTime(userId) {
+  const filePath = `./servers/${userId}.json`;
+
+  const userData = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '{}';
+  const userObject = JSON.parse(userData);
+  userObject.lastExecutionTime = Date.now();
+
+  fs.writeFileSync(filePath, JSON.stringify(userObject, null, 2));
+}
