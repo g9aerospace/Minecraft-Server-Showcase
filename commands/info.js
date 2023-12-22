@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageEmbed, MessageAttachment } = require('discord.js');
+const { version } = require('../package.json');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,11 +12,13 @@ module.exports = {
     const uptime = process.uptime();
     const uptimeString = `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`;
 
+    // Read version from package.json
     const embed = new MessageEmbed()
       .setTitle('Embernodes Showcase')
       .setColor(0x3498db)
-      .addField('About', 'Embernodes Showcase aims to help users showcase their Embernodes server with ease. Version: 1.0.0')
-      .addField('Author', 'G9 Aerospace is a fellow YouTuber who playes games and loves to code')
+      .addField('Version', version)
+      .addField('About', 'Embernodes Showcase aims to help users showcase their Embernodes server with ease.')
+      .addField('Author', 'G9 Aerospace is a fellow YouTuber who plays games and loves to code')
       .addField('Uptime', uptimeString)
       .setFooter('Embernodes', 'attachment://embernodes.png');
 
