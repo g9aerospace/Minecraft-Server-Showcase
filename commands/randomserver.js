@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs').promises; // Using fs.promises for asynchronous file operations
 const path = require('path');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageEmbed, MessageAttachment } = require('discord.js');
@@ -14,24 +14,32 @@ module.exports = {
     try {
       const serversFolder = path.join(__dirname, '../servers');
 
-      // Read all files in the servers folder
-      let serverFiles = fs.readdirSync(serversFolder).filter(file => file.endsWith('.json'));
+      // Read all files in the servers folder asynchronously
+      const serverFiles = await fs.readdir(serversFolder);
 
       if (serverFiles.length === 0) {
         return interaction.reply('No server data found.');
       }
 
       let success = false;
-      let serverData, apiUrl;
+      let serverData, apiUrl, randomServerFile;
 
       // Keep trying until a working server is found or no more servers to try
       while (!success && serverFiles.length > 0) {
         // Choose a random server file
-        const randomServerFile = serverFiles[Math.floor(Math.random() * serverFiles.length)];
+        randomServerFile = serverFiles[Math.floor(Math.random() * serverFiles.length)];
         const serverFilePath = path.join(serversFolder, randomServerFile);
 
         // Read the content of the chosen server file
-        serverData = require(serverFilePath);
+        try {
+          serverData = require(serverFilePath);
+        } catch (fileError) {
+          console.error(`Error reading server file ${randomServerFile}:`, fileError.message);
+          // Remove the current server file from the list
+          serverFiles.splice(serverFiles.indexOf(randomServerFile), 1);
+          continue; // Try another server
+        }
+
         apiUrl = `https://api.mcsrvstat.us/2/${serverData.address}`;
 
         try {
@@ -43,12 +51,12 @@ module.exports = {
           } else {
             console.log(`Server ${serverData.address} is offline or cannot be queried. Trying another server...`);
             // Remove the current server file from the list
-            serverFiles = serverFiles.filter(file => file !== randomServerFile);
+            serverFiles.splice(serverFiles.indexOf(randomServerFile), 1);
           }
         } catch (apiError) {
           console.error(`Error querying server ${serverData.address}:`, apiError.message);
           // Remove the current server file from the list
-          serverFiles = serverFiles.filter(file => file !== randomServerFile);
+          serverFiles.splice(serverFiles.indexOf(randomServerFile), 1);
         }
       }
 
@@ -103,7 +111,7 @@ module.exports = {
             )
             .setImage('attachment://motd.png') // Set the image using the attachment
             .setThumbnail(response.data.icon ? `https://api.mcsrvstat.us/icon/${serverData.address}` : 'https://via.placeholder.com/64')
-            .setFooter(user.username, user.displayAvatarURL({ dynamic: true }));
+            .setFooter(`Server listed by: <@${path.basename(randomServerFile, '.json')}>`, user.displayAvatarURL({ dynamic: true }));
 
           await interaction.followUp({ embeds: [embed], files: [motdImageAttachment] });
           console.log('Interaction reply successful');
