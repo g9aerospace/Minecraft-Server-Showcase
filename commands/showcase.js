@@ -1,7 +1,8 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { MessageEmbed } = require('discord.js');
+const { MessageEmbed, MessageAttachment } = require('discord.js');
 const axios = require('axios');
 const fs = require('fs');
+const { createCanvas } = require('canvas');
 
 require('dotenv').config();
 
@@ -37,6 +38,8 @@ module.exports = {
         return;
       }
 
+      await interaction.reply('Fetching server information...');
+
       const userData = fs.readFileSync(filePath, 'utf8');
       const serverData = JSON.parse(userData);
       const { address, message: userMessage } = serverData;
@@ -65,7 +68,7 @@ module.exports = {
             }
           } catch (whitelistError) {
             console.error('Whitelist Error:', whitelistError.message);
-            await interaction.reply('There was an error checking the server whitelist.');
+            await interaction.followUp('There was an error checking the server whitelist.');
             return;
           }
         }
@@ -73,9 +76,24 @@ module.exports = {
         const user = interaction.user;
 
         try {
-          // Generate Minecraft-style MOTD image with dirt background
+          // Dynamically calculate canvas dimensions based on MOTD text length and retrieved image size
           const motdText = response.data.motd.clean.length > 0 ? response.data.motd.clean[0] : 'No MOTD available';
-          const motdImageUrl = `https://via.placeholder.com/400x20/0099FF/FFFFFF?text=${encodeURIComponent(motdText)}&bg=https://via.placeholder.com/400x20/8B4513/8B4513`;
+          const canvas = createCanvas(800, 100); // Set initial width, you can adjust this as needed
+          const ctx = canvas.getContext('2d'); // Moved this line here
+
+          ctx.fillStyle = '#2E1D10'; // Brown background
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          const fontSize = calculateFontSize(ctx, motdText, 'Arial', canvas.width, 40);
+          ctx.font = `${fontSize}px Arial`;
+
+          ctx.fillStyle = '#FFFFFF'; // White font
+          ctx.fillText(motdText, 10, 40);
+
+          const motdImageBuffer = canvas.toBuffer();
+
+          // Send the MOTD image as a PNG
+          const motdImageAttachment = new MessageAttachment(motdImageBuffer, 'motd.png');
 
           const embed = new MessageEmbed()
             .setTitle('Minecraft Server Showcase')
@@ -87,7 +105,7 @@ module.exports = {
               { name: 'User Message', value: userMessage || 'No custom message provided' },
               { name: 'Software', value: response.data.software || 'Unknown', inline: true }
             )
-            .setImage(motdImageUrl)
+            .setImage('attachment://motd.png') // Set the image using the attachment
             .setThumbnail(response.data.icon ? `https://api.mcsrvstat.us/icon/${address}` : 'https://via.placeholder.com/64')
             .setFooter(user.username, user.displayAvatarURL({ dynamic: true }));
 
@@ -95,30 +113,30 @@ module.exports = {
           const targetChannel = await interaction.client.channels.fetch(targetChannelId);
 
           try {
-            const sentMessage = await targetChannel.send({ embeds: [embed] });
+            const sentMessage = await targetChannel.send({ embeds: [embed], files: [motdImageAttachment] });
 
             console.log('Message sent successfully:', sentMessage);
 
             // Update the user's last execution time
             updateUserLastExecutionTime(userId);
 
-            await interaction.reply(`Server information sent to <#${targetChannelId}>. [View Message](${sentMessage.url})`);
+            await interaction.followUp(`Server information sent to <#${targetChannelId}>.`);
             console.log('Interaction reply successful');
           } catch (sendMessageError) {
             console.error('Send Message Error:', sendMessageError.message);
-            await interaction.reply('There was an error sending the server information message.');
+            await interaction.followUp('There was an error sending the server information message.');
           }
         } catch (embedError) {
           console.error('Embed Generation Error:', embedError.message);
-          await interaction.reply('There was an error generating the server information embed.');
+          await interaction.followUp('There was an error generating the server information embed.');
         }
       } catch (apiError) {
         console.error('API Error:', apiError.message);
-        await interaction.reply('There was an error querying the server information.');
+        await interaction.followUp('There was an error querying the server information.');
       }
     } catch (overallError) {
       console.error('Overall Error:', overallError.message);
-      await interaction.reply('There was an unexpected error executing the command.');
+      await interaction.followUp('There was an unexpected error executing the command.');
     }
   },
 };
@@ -144,4 +162,19 @@ function updateUserLastExecutionTime(userId) {
   userObject.lastExecutionTime = Date.now();
 
   fs.writeFileSync(filePath, JSON.stringify(userObject, null, 2));
+}
+
+function calculateFontSize(ctx, text, font, maxWidth, initialFontSize) {
+  let fontSize = initialFontSize;
+
+  do {
+    ctx.font = `${fontSize}px ${font}`;
+    const textWidth = ctx.measureText(text + '69').width;
+    if (textWidth <= maxWidth) {
+      break;
+    }
+    fontSize--;
+  } while (fontSize > 0);
+
+  return fontSize;
 }
