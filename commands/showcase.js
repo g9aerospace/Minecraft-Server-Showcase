@@ -124,19 +124,19 @@ module.exports = {
             console.log('Interaction reply successful');
           } catch (sendMessageError) {
             console.error('Send Message Error:', sendMessageError.message);
-            await interaction.followUp('There was an error sending the server information message.');
+            await interaction.followUp('There was an error sending the server information message. Please notify our staff!');
           }
         } catch (embedError) {
           console.error('Embed Generation Error:', embedError.message);
-          await interaction.followUp('There was an error generating the server information embed.');
+          await interaction.followUp('There was an error generating the server information embed. Please notify our staff!');
         }
       } catch (apiError) {
         console.error('API Error:', apiError.message);
-        await interaction.followUp('There was an error querying the server information.');
+        await interaction.followUp('There was an error querying the server information. Are you sure your server is online/reachable?');
       }
     } catch (overallError) {
       console.error('Overall Error:', overallError.message);
-      await interaction.followUp('There was an unexpected error executing the command.');
+      await interaction.followUp('There was an unexpected error executing the command. Please try again!');
     }
   },
 };
