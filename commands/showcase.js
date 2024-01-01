@@ -27,18 +27,18 @@ module.exports = {
         const remainingCooldown = cooldownDuration - timeSinceLastExecution;
         const remainingCooldownHours = Math.ceil(remainingCooldown / (60 * 60 * 1000));
 
-        await interaction.reply(`Command is on cooldown. Please wait ${remainingCooldownHours} hours before using it again.`);
+        await interaction.reply(`⏲️Command is on cooldown. Please wait ${remainingCooldownHours} hours before using it again.`);
         return;
       }
 
       // Continue with the command logic
 
       if (!fs.existsSync(filePath)) {
-        await interaction.reply('You have not added any server information. Use the `/addserver` command to add server details.');
+        await interaction.reply('❌You have not added any server information. Use the `/addserver` command to add server details.');
         return;
       }
 
-      await interaction.reply('Fetching server information...');
+      await interaction.reply('🔍Fetching server information...');
 
       const userData = fs.readFileSync(filePath, 'utf8');
       const serverData = JSON.parse(userData);
@@ -50,7 +50,7 @@ module.exports = {
         const response = await axios.get(apiUrl);
 
         if (response.status !== 200 || !response.data.online) {
-          throw new Error('Error querying server information.');
+          throw new Error('❗Error querying server information.');
         }
 
         console.log('Minecraft Server Response:', response.data);
@@ -64,11 +64,11 @@ module.exports = {
             const serverRootDomain = resolvedIp.data.ip || '';
 
             if (!whitelistedIps.includes(serverRootDomain)) {
-              throw new Error('Server IP does not match any whitelisted IP.');
+              throw new Error('🙅The minecraft server address you have provided does not lead to an Embernodes server. Only share an embernodes server! Use the command `/whitelisted-ips` to view the list of IP addresses currently in use by Embernodes!');
             }
           } catch (whitelistError) {
             console.error('Whitelist Error:', whitelistError.message);
-            await interaction.followUp('There was an error checking the server whitelist.');
+            await interaction.followUp('❗There was an error checking the server whitelist.');
             return;
           }
         }
@@ -124,19 +124,19 @@ module.exports = {
             console.log('Interaction reply successful');
           } catch (sendMessageError) {
             console.error('Send Message Error:', sendMessageError.message);
-            await interaction.followUp('There was an error sending the server information message. Please notify our staff!');
+            await interaction.followUp('❗There was an error sending the server information message. Please notify our staff!');
           }
         } catch (embedError) {
           console.error('Embed Generation Error:', embedError.message);
-          await interaction.followUp('There was an error generating the server information embed. Please notify our staff!');
+          await interaction.followUp('❗There was an error generating the server information embed. Please notify our staff!');
         }
       } catch (apiError) {
         console.error('API Error:', apiError.message);
-        await interaction.followUp('There was an error querying the server information. Are you sure your server is online/reachable?');
+        await interaction.followUp('❗There was an error querying the server information. Are you sure your server is online/reachable?');
       }
     } catch (overallError) {
       console.error('Overall Error:', overallError.message);
-      await interaction.followUp('There was an unexpected error executing the command. Please try again!');
+      await interaction.followUp('❗There was an unexpected error executing the command. Please try again!');
     }
   },
 };
