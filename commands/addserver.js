@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { MessageEmbed, WebhookClient } = require('discord.js');
+const { WebhookClient } = require('discord.js');
 const fs = require('fs');
 
 module.exports = {
