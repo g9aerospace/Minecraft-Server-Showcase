@@ -16,14 +16,14 @@ module.exports = {
     // Check if the user has any of the MANAGER_ROLES
     const managerRoleIds = process.env.MANAGER_ROLE_IDS.split(',');
     if (!managerRoleIds.some(roleId => interaction.member.roles.cache.has(roleId))) {
-      await interaction.reply('You do not have permission to use this command.');
+      await interaction.reply('🙅You do not have permission to use this command.');
       return;
     }
 
     // Get the user mentioned in the command
     const targetUser = interaction.options.getUser('user');
     if (!targetUser) {
-      await interaction.reply('Please mention a user for whom you want to remove the cooldown.');
+      await interaction.reply('❌Please mention a user for whom you want to remove the cooldown.');
       return;
     }
 
@@ -40,13 +40,13 @@ module.exports = {
 
         fs.writeFileSync(filePath, JSON.stringify(userObject, null, 2));
 
-        await interaction.reply(`Cooldown removed for user ${targetUser.username}.`);
+        await interaction.reply(`🕛Cooldown removed for user ${targetUser.username}.`);
       } else {
-        await interaction.reply(`User ${targetUser.username} does not have a cooldown.`);
+        await interaction.reply(`❌User ${targetUser.username} does not have a cooldown.`);
       }
     } catch (error) {
       console.error(`Error removing cooldown for user ${targetUserId}:`, error);
-      await interaction.reply('There was an error removing the cooldown.');
+      await interaction.reply('❗There was an error removing the cooldown.');
     }
   },
 };

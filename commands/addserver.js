@@ -51,7 +51,7 @@ module.exports = {
 
         // Notify the user that their data has been updated
         await interaction.reply({
-          content: 'Server information updated successfully!',
+          content: '✅Server information updated successfully!',
           ephemeral: true,
         });
 
@@ -66,7 +66,7 @@ module.exports = {
 
         // Notify the user that their data has been added
         await interaction.reply({
-          content: 'Server information added successfully!',
+          content: '✅Server information added successfully!',
           ephemeral: true,
         });
 
@@ -77,7 +77,7 @@ module.exports = {
     } catch (error) {
       // Log errors in detail
       log(`Error processing server information for user ${interaction.user.id}: ${error.stack}`, 'error');
-      await interaction.reply('There was an error while processing server information.');
+      await interaction.reply('✅There was an error while processing server information.');
 
       // Log detailed error to console
       console.error('Detailed Error:', error);

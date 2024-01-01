@@ -33,7 +33,7 @@ module.exports = {
     } catch (error) {
       console.error(`Error in help command: ${error}`);
       log(`Error in help command: ${error}`, 'error');
-      interaction.reply('There was an error while processing the command. Please try again.');
+      interaction.reply('❗There was an error while processing the command. Please try again.');
     }
   },
 };
