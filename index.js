@@ -48,18 +48,18 @@ client.on('interactionCreate', async (interaction) => {
       }
   }
 
-  if (interaction.isModalSubmit() && interaction.customId === 'modalCommand') {
+  if (interaction.isModalSubmit() && interaction.customId === 'addServerCommand') {
       // Extract data from modal submissions
-      const favoriteColor = interaction.fields.getTextInputValue('favoriteColorInput');
-      const hobbies = interaction.fields.getTextInputValue('hobbiesInput');
+      const serverName = interaction.fields.getTextInputValue('nameInput');
+      const serverAddress = interaction.fields.getTextInputValue('addressInput');
+      const message = interaction.fields.getTextInputValue('messageInput');
 
       // Do something with the submitted data
-      console.log({ favoriteColor, hobbies });
+      console.log({ serverName, serverAddress, message });
 
       // Reply to the user
-      await interaction.reply({ content: 'Modal submission received successfully!', ephemeral: true });
+      await interaction.reply({ content: 'Server information received successfully!', ephemeral: true });
   }
 });
-
 
 client.login(process.env.BOT_TOKEN);
