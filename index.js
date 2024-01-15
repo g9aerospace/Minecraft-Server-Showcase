@@ -33,18 +33,33 @@ client.once('ready', async () => {
 
 // Handle interactions
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isCommand()) return;
+  if (!interaction.isCommand() && !interaction.isModalSubmit()) return;
 
-    const { commandName } = interaction;
+  if (interaction.isCommand()) {
+      const { commandName } = interaction;
 
-    try {
-        // Dynamically handle commands based on the command name
-        const command = require(`./commands/${commandName}.js`);
-        await command.execute(interaction);
-    } catch (error) {
-        console.error(`Error handling command '${commandName}': ${error.message}`);
-        await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
-    }
+      try {
+          // Dynamically handle commands based on the command name
+          const command = require(`./commands/${commandName}.js`);
+          await command.execute(interaction);
+      } catch (error) {
+          console.error(`Error handling command '${commandName}': ${error.message}`);
+          await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
+      }
+  }
+
+  if (interaction.isModalSubmit() && interaction.customId === 'modalCommand') {
+      // Extract data from modal submissions
+      const favoriteColor = interaction.fields.getTextInputValue('favoriteColorInput');
+      const hobbies = interaction.fields.getTextInputValue('hobbiesInput');
+
+      // Do something with the submitted data
+      console.log({ favoriteColor, hobbies });
+
+      // Reply to the user
+      await interaction.reply({ content: 'Modal submission received successfully!', ephemeral: true });
+  }
 });
+
 
 client.login(process.env.BOT_TOKEN);
