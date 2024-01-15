@@ -1,5 +1,6 @@
 const { MessageEmbed } = require('discord.js');
-const { log } = require('../assets/logger'); // Adjust the path accordingly
+const { log } = require('../assets/logger');
+const { name, icon } = require('../package.json'); 
 
 module.exports = {
     data: {
@@ -22,9 +23,13 @@ module.exports = {
                 color: 0x0099ff,
                 title: 'Pong!',
                 fields: [
-                    { name: 'Bot Latency', value: `${latency}ms`, inline: false },
-                    { name: 'Bot Uptime', value: formattedUptime, inline: false },
+                    { name: 'Bot Latency', value: `${latency}ms`, inline: true },
+                    { name: 'Bot Uptime', value: formattedUptime, inline: true },
                 ],
+                footer: {
+                    text: name,
+                    icon_url: icon,
+                },
             };
 
             // Reply to the interaction with the embedded message
