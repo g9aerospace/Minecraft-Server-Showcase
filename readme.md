@@ -3,73 +3,95 @@
 [![GitHub issues](https://img.shields.io/github/issues/g9militantsYT/Minecraft-Server-Showcase)](https://github.com/g9militantsYT/Minecraft-Server-Showcase/issues)
 [![GitHub stars](https://img.shields.io/github/stars/g9militantsYT/Minecraft-Server-Showcase)](https://github.com/g9militantsYT/Minecraft-Server-Showcase/stargazers)
 
-The Minecraft Server Showcase Bot is a Discord bot that allows users to showcase Minecraft servers and retrieve information about them.
+The Minecraft Server Showcase Bot is a feature-rich Discord bot designed to enhance the experience of showcasing and exploring Minecraft servers. It provides a seamless way for users to share server information and retrieve details about various Minecraft servers.
 
 ## Features
 
-- Query Minecraft servers and display information with MOTD (Message of the Day).
-- Handle user input for specifying domains and ports.
-- Automatic error logging and reporting.
+- **Interactive Server Showcase:** Users can showcase their Minecraft servers with a simple command, providing key information like server name, description, and IP address.
+
+- **Query Server Information:** Users can easily query server information, including the Message of the Day (MOTD), player count, and other relevant details.
+
+- **Error Handling:** The bot automatically logs and reports errors, ensuring a smooth and reliable user experience.
+
+- **Permission Management:** Define manager roles that have control over specific bot functionalities, allowing for easy customization based on your Discord server's needs.
 
 ## Installation
 
 To install the bot, follow these steps:
 
-1. Clone the repository:
-
-    ```
+1. **Clone the repository:**
+    ```bash
     git clone https://github.com/g9militantsYT/Minecraft-Server-Showcase.git
     cd Minecraft-Server-Showcase
     ```
 
-2. Install dependencies:
-
-    ```
+2. **Install dependencies:**
+    ```bash
     npm install
     ```
 
-3. Set up environment variables:
-
-    Create a .env file and add the following:
-
+3. **Set up environment variables:**
+    Create a `.env` file and add the following:
+    ```env
+    BOT_TOKEN=
+    GUILD_ID=
+    CLIENT_ID=
+    CHANNEL_ID=
+    MANAGER_ROLE_IDS=
+    WEBHOOK_URL=
+    SHOWCASE_WEBHOOK_URL=
     ```
-        BOT_TOKEN=
-        GUILD_ID=
-        CLIENT_ID=
-        CHANNEL_ID=
-        MANAGER_ROLE_IDS=
-        WEBHOOK_URL=
-        SHOWCASE_WEBHOOK_URL=
-    ```
-    You can have as many manager roles as you want, separate their role ids with commas
-Enter the appropriate values
+    Enter the appropriate values. You can have as many manager roles as needed; separate their role IDs with commas.
 
-4. Run the bot:
-
-    ```
+4. **Run the bot:**
+    ```bash
     node .
     ```
 
-5. Usage
+## Usage
 
+Explore a variety of commands to make the most out of the Minecraft Server Showcase Bot:
+
+1. **Add or Update Server Information:**
+    ```
     /addserver
-    Add or update server information
+    ```
+
+2. **Get Information about Available Commands:**
+    ```
     /help
-    Get information about available commands
+    ```
+
+3. **Get Information about the Bot and its Author:**
+    ```
     /info
-    Get information about the bot and its author
+    ```
+
+4. **Remove Cooldown for a User:**
+    ```
     /removecooldown
-    Remove cooldown for a user
+    ```
+
+5. **Showcase Minecraft Server Information:**
+    ```
     /showcase
-    Showcase Minecraft server information
+    ```
+
+6. **Fetch Server Information:**
+    ```
     /userinfo
-    Fetch server information
+    ```
+
+7. **Show Whitelisted IPs:**
+    ```
     /whitelistedips
-    Show whitelisted IPs
+    ```
 
-6. Support and Feedback
+Feel free to explore these commands to make the most out of the Minecraft Server Showcase Bot.
 
-    If you encounter any issues or have suggestions, feel free to open an issue.
+## Support and Feedback
+
+If you encounter any issues or have suggestions, please open an issue on the [GitHub repository](https://github.com/g9militantsYT/Minecraft-Server-Showcase/issues).
 
 ## Additional Links
 
