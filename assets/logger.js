@@ -47,7 +47,6 @@ const sendToWebhook = async (message) => {
       content: message,
     });
 
-    console.log(`✅Logged to webhook`);
   } catch (error) {
     console.error(`⚠️Failed to log to webhook: ${error.message}`);
     throw new Error('Failed to send log to webhook');
