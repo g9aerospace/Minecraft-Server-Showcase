@@ -3,7 +3,6 @@
 const { MessageEmbed } = require('discord.js');
 const fs = require('fs').promises;
 const { log } = require('../assets/logger');
-const { name, icon } = require('../package.json');
 const axios = require('axios');
 const dotenv = require('dotenv');
 
@@ -18,6 +17,7 @@ module.exports = {
         try {
             // Get user ID
             const userId = interaction.user.id;
+            const user = interaction.user;
 
             // Specify the file path
             const filePath = `./users/${userId}.json`;
@@ -26,20 +26,19 @@ module.exports = {
             const userData = await fs.readFile(filePath, 'utf8');
             const userDataJson = JSON.parse(userData);
 
-            // Create an embed with user data using Direct Object Initialization
+            // Update the embed title to include the server name
             const embed = {
                 color: 0x0099ff,
-                title: 'User Showcase',
+                title: `${userDataJson.serverName}`,
                 fields: [
-                    { name: 'Server Name', value: userDataJson.serverName, inline: true },
-                    { name: 'Server Address', value: userDataJson.serverAddress, inline: true },
-                    { name: 'Additional Message', value: userDataJson.message },
+                    { name: 'Address', value: `\`${userDataJson.serverAddress}\``, inline: false },
+                    { name: '', value: userDataJson.message },
                 ],
                 footer: {
-                    text: name,
-                    icon_url: icon,
+                    text: `${user.tag}`,
+                    icon_url: user.displayAvatarURL({ dynamic: true }),
                 },
-            };
+            };            
 
             // Send the embed to the showcase webhook
             const showcaseWebhookUrl = process.env.SHOWCASE_WEBHOOK_URL;
