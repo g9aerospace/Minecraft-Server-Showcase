@@ -1,108 +1,66 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-const { WebhookClient, MessageEmbed } = require('discord.js');
-const fs = require('fs');
+// userinfo.js
+
+const { MessageEmbed } = require('discord.js');
+const { log } = require('../assets/logger');
+const { name, icon } = require('../package.json');
+const fs = require('fs').promises;
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('userinfo')
-    .setDescription('Fetch server information')
-    .addUserOption(option =>
-      option.setName('target')
-        .setDescription('Select a user')
-        .setRequired(false)),
+    data: {
+        name: 'userinfo',
+        description: 'Display user information.',
+        options: [
+            {
+                type: 6,  // Correct type for USER
+                name: 'user',
+                description: 'The user to get information about.',
+                required: false,
+            },
+        ],
+    },
+    async execute(interaction) {
+        try {
+            log('INFO', 'Userinfo command executed', interaction.guild.name);
 
-  async execute(interaction) {
-    try {
-      // Defer the initial reply before performing the operation
-      await interaction.deferReply({ ephemeral: true }); // Set ephemeral to true
+            // Check if a user is mentioned
+            const mentionedUser = interaction.options.getUser('user');
+            const targetUser = mentionedUser || interaction.user;
 
-      // Get the selected user ID or the ID of the user who executed the command
-      const targetUser = interaction.options.getUser('target') || interaction.user;
-      const targetUserId = targetUser.id;
-      const targetUsername = targetUser.username;
+            // Read data from the user's JSON file in the "users" folder
+            const filePath = `./users/${targetUser.id}.json`;
 
-      // Log the command execution
-      log(`Userinfo command executed by ${interaction.user.tag} for user ${targetUser.tag}`);
+            try {
+                const userData = await fs.readFile(filePath, 'utf-8');
+                const { serverName, serverAddress, message } = JSON.parse(userData);
 
-      // Check if the user has server information
-      const filePath = `./servers/${targetUserId}.json`;
-      log(`Checking for server information file: ${filePath}`);
+                // Create an embed with user details and data from the JSON file
+                const embed = {
+                    color: 0x0099ff,
+                    title: `User Information for ${targetUser.username}`,
+                    fields: [
+                        { name: 'Server Name', value: serverName || 'Not specified', inline: false },
+                        { name: 'Address', value: '```' + (serverAddress || 'Not specified') + '```', inline: false },
+                        { name: 'Message', value: message || 'No custom message', inline: false },
+                    ],
+                    footer: {
+                        text: name,
+                        icon_url: icon,
+                    },
+                };
 
-      if (fs.existsSync(filePath)) {
-        // Read server information from the file
-        const serverData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-        log(`Server information found for user ${targetUser.tag}: ${JSON.stringify(serverData)}`);
+                // Reply to the interaction with the embedded message
+                await interaction.reply({ embeds: [embed], ephemeral: true });
+            } catch (error) {
+                // If the file doesn't exist or there is an error reading it
+                log('ERROR', `Error reading data for user ${targetUser.id}: ${error.message}`, interaction.guild.name);
+                console.error(error);
+                await interaction.reply({ content: 'No user data found.', ephemeral: true });
+            }
 
-        // Construct the server information as a hidden text message
-        const serverInfoText = `**Server Information for ${targetUsername}**\n\n` +
-          `> **Server Address:** ${serverData.address || 'Not provided'}\n` +
-          `> **Message:** ${serverData.message || 'Not provided'}`;
-        log(`Constructed server information text: ${serverInfoText}`);
-
-        // Send the hidden text message
-        await interaction.followUp({ content: serverInfoText, ephemeral: true });
-        log(`Response sent for user ${targetUser.tag}`);
-
-        // Log the successful command execution
-        log(`Userinfo command successfully executed for user ${targetUser.tag}`);
-      } else {
-        await interaction.followUp({ content: `No server information found for ${targetUsername}.`, ephemeral: true });
-        log(`No server information found for user ${targetUser.tag}`);
-
-        // Log that no server information was found
-        log(`No server information found for user ${targetUser.tag}`);
-      }
-    } catch (error) {
-      console.error(`Error in userinfo command: ${error}`);
-      await interaction.followUp({ content: 'There was an error while processing the command.', ephemeral: true });
-
-      // Log the error
-      log(`Error in userinfo command: ${error}`, 'error');
-    }
-  },
+        } catch (error) {
+            log('ERROR', `Error executing userinfo command: ${error.message}`, interaction.guild.name);
+            console.error(error);
+            await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
+        }
+    },
 };
-
-// Function to log messages with timestamp and write to file, console, and webhook
-function log(message, logLevel = 'info') {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] [${logLevel.toUpperCase()}] ${message}`;
-
-  // Append the log to the bot.log file
-  fs.appendFileSync('./bot.log', logMessage + '\n', 'utf8');
-
-  // Log to console
-  if (logLevel === 'error') {
-    console.error(logMessage);
-  } else {
-    console.log(logMessage);
-  }
-
-  // Log to webhook with embeds
-  try {
-    // Assuming you have a webhook URL stored in the process.env.WEBHOOK_URL
-    const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_URL });
-
-    const embed = new MessageEmbed()
-      .setColor(getLogLevelColor(logLevel))
-      .setTitle(`${logLevel.toUpperCase()} Log`)
-      .setDescription(`\`\`\`plaintext\n${logMessage}\n\`\`\``);
-
-    webhookClient.send({ embeds: [embed] });
-  } catch (webhookError) {
-    console.error(`Error sending log to webhook: ${webhookError}`);
-  }
-}
-
-// Helper function to get color based on log level
-function getLogLevelColor(logLevel) {
-  switch (logLevel) {
-    case 'error':
-      return '#FF0000'; // Red
-    case 'warn':
-      return '#FFA500'; // Orange
-    case 'info':
-      return '#00BFFF'; // Blue
-    default:
-      return '#808080'; // Gray for unknown log levels
-  }
-}

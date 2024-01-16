@@ -1,73 +1,66 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageEmbed } = require('discord.js');
+const { log } = require('../assets/logger');
+const { name, icon } = require('../package.json');
 const fs = require('fs');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('help')
-    .setDescription('Get information about available commands'),
+    data: {
+        name: 'help',
+        description: 'Display bot commands and usage',
+    },
+    async execute(interaction) {
+        try {
+            log('INFO', 'Help command execution started', interaction.guild.name);
 
-  execute(interaction) {
-    try {
-      // Log the command execution
-      log(`Help command executed by ${interaction.user.tag}`);
+            // Read the contents of the "commands" folder
+            const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
-      // Get a list of available commands
-      const commands = getAvailableCommands();
+            // Create an array to store command information
+            const commandsInfo = [];
 
-      // Create an embed with command information
-      const embed = new MessageEmbed()
-        .setColor('#3498db') // Blue color
-        .setTitle('Command Help')
-        .setDescription('List of available commands and their descriptions:')
-        .addFields(
-          commands.map(command => ({
-            name: `/${command.name}`,
-            value: command.description,
-          }))
-        )
-        .setFooter('Embernodes', 'attachment://embernodes.png');
+            // Loop through each command file to extract name and description
+            for (const file of commandFiles) {
+                const command = require(`./${file}`);
+                console.log(`Loaded command data for ${file}:`, command.data);
+                commandsInfo.push({
+                    name: command.data.name,
+                    description: command.data.description,
+                });
+            }
 
-      // Reply with the embed
-      interaction.reply({ embeds: [embed], files: ['./embernodes.png'] });
-    } catch (error) {
-      console.error(`Error in help command: ${error}`);
-      log(`Error in help command: ${error}`, 'error');
-      interaction.reply('❗There was an error while processing the command. Please try again.');
-    }
-  },
+            // Object literal for the embed
+            const embed = {
+                color: 0x0099ff,
+                title: 'Bot Commands',
+                fields: commandsInfo.map(command => ({
+                    name: `/${command.name}`,
+                    value: command.description,
+                    inline: false,
+                })),
+                footer: {
+                    text: name,
+                    icon_url: icon,
+                },
+            };
+
+            // Log information about the generated embed
+            log('INFO', 'Help embed created', interaction.guild.name);
+
+            // Reply to the interaction with the embedded message using the created embed object
+            await interaction.reply({ embeds: [embed] });
+
+            // Log that the response was successfully sent
+            log('INFO', 'Help command execution completed', interaction.guild.name);
+        } catch (error) {
+            // Log and handle errors gracefully
+            log('ERROR', `Error executing help command: ${error.message}`, interaction.guild.name);
+            console.error(error);
+
+            // Reply to the interaction with an error message
+            await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
+
+            // Log that an error response was sent
+            log('ERROR', 'Error response sent to the interaction', interaction.guild.name);
+        }
+    },
 };
-
-// Function to get a list of available commands
-function getAvailableCommands() {
-  const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-  const commands = [];
-
-  for (const file of commandFiles) {
-    const command = require(`./${file}`);
-    commands.push({
-      name: command.data.name,
-      description: command.data.description,
-    });
-  }
-
-  return commands;
-}
-
-// Function to log messages with timestamp and write to a file
-function log(message, logLevel = 'info') {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] [${logLevel.toUpperCase()}] ${message}`;
-
-  const logFilePath = './bot.log';
-
-  // Append the log to the specified log file
-  fs.appendFileSync(logFilePath, logMessage + '\n', 'utf8');
-
-  // Log to console
-  if (logLevel === 'error') {
-    console.error(logMessage);
-  } else {
-    console.log(logMessage);
-  }
-}

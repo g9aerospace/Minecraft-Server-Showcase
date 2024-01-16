@@ -1,51 +1,50 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-const { MessageEmbed, MessageAttachment } = require('discord.js');
-const { version } = require('../package.json');
+const { MessageEmbed } = require('discord.js');
+const { log } = require('../assets/logger');
+const { name, description, version, author, icon } = require('../package.json');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('info')
-    .setDescription('Get information about the bot and its author'),
+    data: {
+        name: 'info',
+        description: 'Display bot information',
+    },
+    async execute(interaction) {
+        try {
+            log('INFO', 'Info command execution started', interaction.guild.name);
 
-  async execute(interaction) {
-    // Calculate uptime
-    const uptime = process.uptime();
-    const uptimeString = `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`;
+            // Create an embed with information fields
+            const embed = {
+                color: 0x0099ff,
+                title: 'Bot Information',
+                fields: [
+                    { name: 'Name', value: name, inline: false },
+                    { name: 'Description', value: description, inline: false },
+                    { name: 'Version', value: version, inline: false },
+                    { name: 'Author', value: author, inline: false }
+                ],
+                footer: {
+                    text: name,
+                    icon_url: icon,
+                },
+            };
 
-    // Read version from package.json
-    const embed = new MessageEmbed()
-      .setTitle('Embernodes Showcase')
-      .setColor(0x3498db)
-      .addField('Version', version)
-      .addField('About', 'Embernodes Showcase aims to help users showcase their Embernodes server with ease.')
-      .addField('Author', 'G9 Aerospace is a fellow YouTuber who plays games and loves to code')
-      .addField('Uptime', uptimeString)
-      .setFooter('Embernodes', 'attachment://embernodes.png');
+            // Log information about the generated embed
+            log('INFO', 'Bot information embed created', interaction.guild.name);
 
-    const imageAttachment = new MessageAttachment('./embernodes.png');
+            // Reply to the interaction with the embedded message
+            await interaction.reply({ embeds: [embed] });
 
-    interaction.reply({
-      embeds: [embed],
-      files: [imageAttachment],
-      components: [
-        {
-          type: 'ACTION_ROW',
-          components: [
-            {
-              type: 'BUTTON',
-              style: 'LINK',
-              label: 'GitHub',
-              url: 'https://github.com/g9militantsYT/Minecraft-Server-Showcase/tree/Embernodes',
-            },
-            {
-              type: 'BUTTON',
-              style: 'LINK',
-              label: 'Author website',
-              url: 'https://g9aerospace.in/',
-            },
-          ],
-        },
-      ],
-    });
-  },
+            // Log that the response was successfully sent
+            log('INFO', 'Info command execution completed', interaction.guild.name);
+        } catch (error) {
+            // Log and handle errors gracefully
+            log('ERROR', `Error executing info command: ${error.message}`, interaction.guild.name);
+            console.error(error);
+
+            // Reply to the interaction with an error message
+            await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
+
+            // Log that an error response was sent
+            log('ERROR', 'Error response sent to the interaction', interaction.guild.name);
+        }
+    },
 };

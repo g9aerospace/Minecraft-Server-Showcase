@@ -1,146 +1,81 @@
-const { Client, Intents, WebhookClient } = require('discord.js');
-const { config } = require('dotenv');
 const fs = require('fs');
+const { Client, GatewayIntentBits } = require('discord.js');
+const dotenv = require('dotenv');
+const { log } = require('./assets/logger');
 
-// Load environment variables from a .env file
-config();
+dotenv.config();
 
-// Declare constants
-const { BOT_TOKEN, GUILD_ID, WEBHOOK_URL } = process.env;
-
-// Create an instance of the Discord client with necessary intents
-const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
-
-// Ensure the bot.log file exists
-fs.writeFileSync('bot.log', '', 'utf8');
-
-client.once('ready', () => {
-  log('Bot is ready.');
-  registerSlashCommands();
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+    ],
 });
 
+// Register commands dynamically
+client.once('ready', async () => {
+    log('INFO', `Logged in as ${client.user.tag}`);
+    log('INFO', 'Bot is now ready.');
+
+    const guildId = process.env.GUILD_ID;
+
+    const guild = await client.guilds.fetch(guildId);
+    await guild.commands.set([]);
+
+    const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+    for (const file of commandFiles) {
+        const command = require(`./commands/${file}`);
+        await guild.commands.create(command.data);
+        log('INFO', `Slash command loaded/reloaded in guild ${guild.name}: ${file}`);
+    }
+});
+
+// Handle interactions
 client.on('interactionCreate', async (interaction) => {
-  // Log every interaction
-  log(`Interaction received: ${interaction.type} | ID: ${interaction.id} | User: ${interaction.user.tag}`);
+  if (!interaction.isCommand() && !interaction.isModalSubmit()) return;
 
-  // Log additional details for each interaction
-  log(`Guild: ${interaction.guild ? interaction.guild.name : 'DM'}`);
-  log(`Channel: ${interaction.channel.name} (${interaction.channel.type})`);
-  log(`Command: ${interaction.commandName}`);
-  log(`Options: ${JSON.stringify(interaction.options)}`);
-  
-  if (!interaction.isCommand()) return;
+  if (interaction.isCommand()) {
+      const { commandName } = interaction;
 
-  const { commandName } = interaction;
+      try {
+          // Dynamically handle commands based on the command name
+          const command = require(`./commands/${commandName}.js`);
+          await command.execute(interaction);
+      } catch (error) {
+          console.error(`Error handling command '${commandName}': ${error.message}`);
+          await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
+      }
+  }
 
-  // Log slash command usage
-  log(`Slash Command received: ${commandName} from ${interaction.user.tag}`);
+  if (interaction.isModalSubmit() && interaction.customId === 'addServerCommand') {
+      // Extract data from modal submissions
+      const serverName = interaction.fields.getTextInputValue('nameInput');
+      const serverAddress = interaction.fields.getTextInputValue('addressInput');
+      const message = interaction.fields.getTextInputValue('messageInput');
 
-  if (!client.commands.has(commandName)) return;
+      // Save data to a JSON file named after the user's userId
+      const userId = interaction.user.id;
+      const userData = { serverName, serverAddress, message };
 
-  try {
-    const startTimestamp = new Date();
+      // Specify the file path
+      const filePath = `./users/${userId}.json`;
 
-    await client.commands.get(commandName).execute(interaction);
+      try {
+          // Ensure the "users" directory exists, create it if not
+          await fs.promises.mkdir('./users', { recursive: true });
 
-    const endTimestamp = new Date();
-    const timeTaken = endTimestamp - startTimestamp;
+          // Write the data to the JSON file
+          await fs.promises.writeFile(filePath, JSON.stringify(userData, null, 2));
+          console.log(`Data saved to ${filePath}`);
+      } catch (error) {
+          console.error(`Error saving data for user ${userId}:`, error);
+          await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
+          return;
+      }
 
-    // Log bot's response with timestamp and time taken
-    log(`Bot response for ${commandName} sent in ${timeTaken}ms`);
-  } catch (error) {
-    // Log errors in detail
-    log(`Error executing command ${commandName}: ${error.stack}`, 'error');
-    interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+      // Reply to the user
+      await interaction.reply({ content: 'Server information received and saved successfully!', ephemeral: true });
   }
 });
-
-client.login(BOT_TOKEN);
-
-client.commands = new Map();
-
-function registerSlashCommands() {
-  const commands = [];
-
-  const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-
-  for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    commands.push(command.data.toJSON());
-    client.commands.set(command.data.name, command);
-    log(`Command registered: ${command.data.name}`);
-  }
-
-  const guild = client.guilds.cache.get(GUILD_ID);
-  if (!guild) {
-    log(`Guild with ID ${GUILD_ID} not found.`);
-    return;
-  }
-
-  guild.commands.set(commands)
-    .then(() => log('Slash commands registered successfully!'))
-    .catch(error => log(`Error registering slash commands: ${error}`, 'error'));
-}
-
-// Function to log messages with timestamp and write to file, console, and webhook
-function log(message, logLevel = 'info') {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] [${logLevel.toUpperCase()}] ${message}`;
-
-  // Append the log to the bot.log file
-  fs.appendFileSync('bot.log', logMessage + '\n', 'utf8');
-
-  // Log to console
-  if (logLevel === 'error') {
-    console.error(logMessage);
-  } else {
-    console.log(logMessage);
-  }
-
-  // Log to webhook
-  sendLogToWebhook(logMessage);
-}
-
-// Function to send log message to the webhook as embed
-async function sendLogToWebhook(logMessage) {
-  try {
-    const webhookClient = new WebhookClient({ url: WEBHOOK_URL });
-
-    // Split log message into lines
-    const logLines = logMessage.split('\n');
-
-    // Create an embed for each line of log
-    for (const line of logLines) {
-      const embed = {
-        title: 'Log Message',
-        description: line,
-        color: getColorForLogLevel(line),
-        timestamp: new Date(),
-        footer: {
-          text: 'Bot Log',
-        },
-      };
-
-      await webhookClient.send({ embeds: [embed] });
-    }
-  } catch (webhookError) {
-    console.error(`Error sending log to webhook: ${webhookError}`);
-  }
-}
-
-// Function to determine color for embed based on log level
-function getColorForLogLevel(logLine) {
-  const logLevel = logLine.match(/\[([^\]]+)\]/);
-  if (logLevel) {
-    switch (logLevel[1].toUpperCase()) {
-      case 'ERROR':
-        return 0xFF0000; // Red
-      case 'INFO':
-        return 0x00FF00; // Green
-      // Add more cases for other log levels if needed
-      default:
-        return 0xFFFFFF; // White (default)
-    }
-  }
-  return 0xFFFFFF; // White (default)
-}
+client.login(process.env.BOT_TOKEN);
