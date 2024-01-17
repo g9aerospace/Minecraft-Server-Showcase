@@ -21,14 +21,13 @@ module.exports = {
             // Loop through each command file to extract name and description
             for (const file of commandFiles) {
                 const command = require(`./${file}`);
-                console.log(`Loaded command data for ${file}:`, command.data);
                 commandsInfo.push({
                     name: command.data.name,
                     description: command.data.description,
                 });
             }
 
-            // Object literal for the embed
+            // Create the embed
             const embed = {
                 color: 0x0099ff,
                 title: 'Bot Commands',
@@ -54,7 +53,6 @@ module.exports = {
         } catch (error) {
             // Log and handle errors gracefully
             log('ERROR', `Error executing help command: ${error.message}`, interaction.guild.name);
-            console.error(error);
 
             // Reply to the interaction with an error message
             await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });

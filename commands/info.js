@@ -11,7 +11,7 @@ module.exports = {
         try {
             log('INFO', 'Info command execution started', interaction.guild.name);
 
-            // Create an embed with information fields
+            // Create an embed with informative fields
             const embed = {
                 color: 0x0099ff,
                 title: 'Bot Information',
@@ -38,7 +38,6 @@ module.exports = {
         } catch (error) {
             // Log and handle errors gracefully
             log('ERROR', `Error executing info command: ${error.message}`, interaction.guild.name);
-            console.error(error);
 
             // Reply to the interaction with an error message
             await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });

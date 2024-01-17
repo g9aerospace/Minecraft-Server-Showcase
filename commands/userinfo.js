@@ -11,7 +11,7 @@ module.exports = {
         description: 'Display user information.',
         options: [
             {
-                type: 6,  // Correct type for USER
+                type: 6,
                 name: 'user',
                 description: 'The user to get information about.',
                 required: false,
@@ -53,13 +53,11 @@ module.exports = {
             } catch (error) {
                 // If the file doesn't exist or there is an error reading it
                 log('ERROR', `Error reading data for user ${targetUser.id}: ${error.message}`, interaction.guild.name);
-                console.error(error);
                 await interaction.reply({ content: 'No user data found.', ephemeral: true });
             }
 
         } catch (error) {
             log('ERROR', `Error executing userinfo command: ${error.message}`, interaction.guild.name);
-            console.error(error);
             await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
         }
     },
