@@ -59,7 +59,6 @@ client.on('interactionCreate', async (interaction) => {
           const command = require(`./commands/${commandName}.js`);
           await command.execute(interaction);
       } catch (error) {
-          console.error(`Error handling command '${commandName}': ${error.message}`);
           await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
       }
   }
@@ -70,7 +69,7 @@ client.on('interactionCreate', async (interaction) => {
       const serverAddress = interaction.fields.getTextInputValue('addressInput');
       const message = interaction.fields.getTextInputValue('messageInput');
 
-      // Save data to a JSON file named after the user's userId
+      // Save data to a JSON file named after the user's userId in the users folder
       const userId = interaction.user.id;
       const userData = { serverName, serverAddress, message };
 
@@ -83,9 +82,7 @@ client.on('interactionCreate', async (interaction) => {
 
           // Write the data to the JSON file
           await fs.promises.writeFile(filePath, JSON.stringify(userData, null, 2));
-          console.log(`Data saved to ${filePath}`);
       } catch (error) {
-          console.error(`Error saving data for user ${userId}:`, error);
           await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
           return;
       }

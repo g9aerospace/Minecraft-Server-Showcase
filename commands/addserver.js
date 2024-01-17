@@ -1,5 +1,3 @@
-// addserver.js
-
 const { ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const { log } = require('../assets/logger');
 

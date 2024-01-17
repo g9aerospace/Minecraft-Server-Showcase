@@ -1,5 +1,3 @@
-// commands/showcase.js
-
 const { MessageEmbed } = require('discord.js');
 const fs = require('fs').promises;
 const { log } = require('../assets/logger');
@@ -16,13 +14,9 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            // Get user ID
+            // Get user ID and data
             const userId = interaction.user.id;
-
-            // Specify the file path
             const filePath = `./users/${userId}.json`;
-
-            // Read data from the JSON file
             const userData = await fs.readFile(filePath, 'utf8');
             const userDataJson = JSON.parse(userData);
 
@@ -37,7 +31,7 @@ module.exports = {
                 return;
             }
 
-            // Update the embed title to include the server name and time of showcasing
+            // Update the embed title to include the server name
             const currentTimeFormatted = currentTime.toISOString();
             const embed = {
                 color: 0x0099ff,
@@ -72,8 +66,6 @@ module.exports = {
             await interaction.reply('There was an error while processing the showcase command.');
         }
     },
-// ...
-
 };
 
 async function sendToWebhook(webhookUrl, embed) {

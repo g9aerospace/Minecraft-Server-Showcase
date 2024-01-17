@@ -11,7 +11,7 @@ module.exports = {
         try {
             log('INFO', 'Ping command executed', interaction.guild.name);
 
-            // Calculate the bot's latency (ensure it's positive)
+            // Calculate the bot's latency
             const latency = Math.abs(Date.now() - interaction.createdTimestamp);
 
             // Calculate bot uptime
@@ -36,7 +36,6 @@ module.exports = {
             await interaction.reply({ embeds: [embed] });
         } catch (error) {
             log('ERROR', `Error executing ping command: ${error.message}`, interaction.guild.name);
-            console.error(error);
             await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
         }
     },
