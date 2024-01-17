@@ -19,12 +19,17 @@ async function registerCommands(guild) {
         const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
         for (const file of commandFiles) {
-            const command = require(`./commands/${file}`);
             try {
-                await guild.commands.create(command.data);
-                log('INFO', `Slash command loaded/reloaded in guild ${guild.name}: ${command.data.name}`);
+                const commandModule = require(`./commands/${file}`);
+                if (typeof commandModule !== 'object' || typeof commandModule.execute !== 'function') {
+                    log('ERROR', `Invalid command structure in ${file}. Skipping registration.`);
+                    continue;
+                }
+
+                await guild.commands.create(commandModule.data);
+                log('INFO', `Slash command loaded/reloaded in guild ${guild.name}: ${commandModule.data.name}`);
             } catch (error) {
-                log('ERROR', `Error loading/reloading command '${command.data.name}': ${error.message}`);
+                log('ERROR', `Error loading/reloading command '${file}': ${error.message}`);
             }
         }
     } catch (error) {
@@ -59,9 +64,14 @@ client.on('interactionCreate', async (interaction) => {
             const { commandName } = interaction;
 
             try {
-                // Dynamically handle commands based on the command name
-                const command = require(`./commands/${commandName}.js`);
-                await command.execute(interaction);
+                const commandModule = require(`./commands/${commandName}.js`);
+                if (typeof commandModule !== 'object' || typeof commandModule.execute !== 'function') {
+                    log('ERROR', `Invalid command structure for '${commandName}'. Skipping execution.`);
+                    await interaction.reply({ content: 'An error occurred while processing your request.', ephemeral: true });
+                    return;
+                }
+
+                await commandModule.execute(interaction);
             } catch (error) {
                 log('ERROR', `Error executing command '${commandName}': ${error.message}`);
                 await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
