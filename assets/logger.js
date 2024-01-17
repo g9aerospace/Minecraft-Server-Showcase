@@ -16,7 +16,7 @@ const log = async (level, data) => {
   const logFilePath = `logs/log_${timestamp.slice(0, 10)}.txt`;
   fs.appendFileSync(logFilePath, logMessage);
 
-  logQueue.push(logMessage);
+  logQueue.push({ level, data });
 
   if (!isLogging) {
     processQueue();
@@ -30,10 +30,10 @@ const processQueue = async () => {
   }
 
   isLogging = true;
-  const logMessage = logQueue.shift();
+  const { level, data } = logQueue.shift();
 
   try {
-    await sendToWebhook(logMessage);
+    await sendToWebhook(level, data);
   } catch (error) {
     console.error(`⚠️Failed to log to webhook: ${error.message}`);
   }
@@ -41,15 +41,34 @@ const processQueue = async () => {
   processQueue();
 };
 
-const sendToWebhook = async (message) => {
+const sendToWebhook = async (level, data) => {
   try {
+    const color = getColorCode(level);
     const response = await axios.post(process.env.WEBHOOK_URL, {
-      content: message,
+      embeds: [{
+        title: `[${level}]`,
+        description: data,
+        color,
+      }],
     });
 
+  
   } catch (error) {
     console.error(`⚠️Failed to log to webhook: ${error.message}`);
     throw new Error('Failed to send log to webhook');
+  }
+};
+
+const getColorCode = (level) => {
+  switch (level) {
+    case 'INFO':
+      return 0x3498db; // Blue color for INFO
+    case 'WARNING':
+      return 0xf39c12; // Orange color for WARNING
+    case 'ERROR':
+      return 0xe74c3c; // Red color for ERROR
+    default:
+      return 0x2ecc71; // Green color for other levels
   }
 };
 

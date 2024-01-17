@@ -13,21 +13,37 @@ const client = new Client({
     ],
 });
 
-// Register commands dynamically
+// Function to register all commands
+async function registerCommands(guild) {
+    const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+
+    for (const file of commandFiles) {
+        const command = require(`./commands/${file}`);
+        try {
+            await guild.commands.create(command.data);
+            log('INFO', `Slash command loaded/reloaded in guild ${guild.name}: ${command.data.name}`);
+        } catch (error) {
+            log('ERROR', `Error loading/reloading command '${command.data.name}': ${error.message}`);
+        }
+    }
+}
+
 client.once('ready', async () => {
     log('INFO', `Logged in as ${client.user.tag}`);
     log('INFO', 'Bot is now ready.');
 
-    const guildId = process.env.GUILD_ID;
+    try {
+        const guildId = process.env.GUILD_ID;
+        const guild = await client.guilds.fetch(guildId);
+        await guild.commands.set([]);
 
-    const guild = await client.guilds.fetch(guildId);
-    await guild.commands.set([]);
+        // Register all commands on startup
+        await registerCommands(guild);
 
-    const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-    for (const file of commandFiles) {
-        const command = require(`./commands/${file}`);
-        await guild.commands.create(command.data);
-        log('INFO', `Slash command loaded/reloaded in guild ${guild.name}: ${file}`);
+        log('INFO', 'All commands registered successfully.');
+
+    } catch (error) {
+        log('ERROR', 'Error during startup:', error.message);
     }
 });
 
