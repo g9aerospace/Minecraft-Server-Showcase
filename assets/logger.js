@@ -2,6 +2,8 @@ const fs = require('fs');
 const axios = require('axios');
 const chalk = require('chalk');
 
+const { name, version, icon } = require('../package.json');
+
 const logQueue = [];
 let isLogging = false;
 
@@ -44,15 +46,21 @@ const processQueue = async () => {
 const sendToWebhook = async (level, data) => {
   try {
     const color = getColorCode(level);
-    const response = await axios.post(process.env.WEBHOOK_URL, {
+
+    const payload = {
+      username: name,
+      avatar_url: icon,
       embeds: [{
         title: `[${level}]`,
         description: data,
         color,
+        footer: {
+          text: `Version: ${version}`,
+        },
       }],
-    });
+    };
 
-  
+    const response = await axios.post(process.env.WEBHOOK_URL, payload);
   } catch (error) {
     console.error(`⚠️Failed to log to webhook: ${error.message}`);
     throw new Error('Failed to send log to webhook');
